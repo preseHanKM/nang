@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>충북 헤리티지 패스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a travel "passport" — 쪽빛(indigo) ink on cool hanji paper, 단청 vermilion used only for stamps & points, jade for success. App shell with bottom tab bar for tablet/phone. */
+:root{
+  --paper:#f2f4f1;
+  --surface:#ffffff;
+  --ink:#1c2947;
+  --muted:#5b6475;
+  --line:#d8ddd6;
+  --jade:#2f8a72;
+  --stamp:#cf4128;
+  --gold:#b98a1c;
+  --tint:#e6ebf3;
+  --shadow:0 1px 2px rgba(28,41,71,.08),0 6px 18px rgba(28,41,71,.06);
+  --font-display:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;
+  --font-body:"Noto Sans KR","Noto Sans SC","Noto Sans JP","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10151f;--surface:#18202e;--ink:#e7ebf2;--muted:#9aa4b6;--line:#2a3445;
+    --jade:#4fb597;--stamp:#ee6a50;--gold:#dcae45;--tint:#202b3d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10151f;--surface:#18202e;--ink:#e7ebf2;--muted:#9aa4b6;--line:#2a3445;
+  --jade:#4fb597;--stamp:#ee6a50;--gold:#dcae45;--tint:#202b3d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--jade);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.app{max-width:980px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-bottom:84px}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;padding:14px 16px;position:sticky;top:0;background:var(--paper);z-index:20;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.seal{width:38px;height:38px;border-radius:8px;background:var(--stamp);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:20px;flex:none;transform:rotate(-4deg)}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:20px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{display:block;color:var(--muted);font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pts{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pts i{width:10px;height:10px;border-radius:50%;background:var(--stamp);display:inline-block}
+select.lang{appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 28px 8px 10px;font:inherit;color:var(--ink);background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+
+main{padding:18px 16px;display:flex;flex-direction:column;gap:22px}
+.view{display:none;flex-direction:column;gap:22px}
+.view.on{display:flex}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sec-h h2{font-family:var(--font-display);font-weight:400;font-size:22px}
+.sec-h p{margin:0;color:var(--muted);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+
+/* hero */
+.hero{display:flex;flex-direction:column;overflow:hidden}
+.hero .txt{padding:22px;display:flex;flex-direction:column;gap:14px}
+.hero h2{font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1.2}
+.hero-photo{position:relative;aspect-ratio:12/5;background:var(--tint);overflow:hidden}
+.hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:opacity .45s ease}
+.hero-photo img.hide{opacity:0}
+.hero-photo figcaption{position:absolute;left:14px;bottom:14px;background:rgba(28,41,71,.82);color:#fff;font-weight:700;font-size:14px;padding:6px 12px;border-radius:999px}
+.hubs{display:flex;gap:8px;flex-wrap:wrap}
+.hub{flex:1 1 140px;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.hub b{font-size:15px}
+.hub span{font-size:12px;color:var(--muted)}
+.hub[aria-pressed="true"]{border-color:var(--ink);background:var(--tint)}
+
+/* passport */
+.passport{padding:18px;display:flex;flex-direction:column;gap:14px}
+.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.stamp{aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-size:11px;text-align:center;color:var(--muted);padding:4px;line-height:1.15}
+.stamp.got{border:3px solid var(--stamp);color:var(--stamp);font-weight:700;transform:rotate(-8deg);background:color-mix(in srgb,var(--stamp) 8%,transparent)}
+.meter{height:8px;background:var(--tint);border-radius:99px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--stamp);border-radius:99px;transition:width .4s}
+.rank{display:flex;justify-content:space-between;font-size:14px;gap:8px;flex-wrap:wrap}
+
+/* chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* place cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.pcard{overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--line)}
+.pcard img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.pcard .b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.pcard h3{font-size:16px;font-weight:700}
+.pcard .meta{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tag{background:var(--tint);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--ink)}
+.got-badge{color:var(--stamp);font-weight:700;font-size:12px}
+.rec{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rec .pcard .why{font-size:13px;color:var(--jade);font-weight:500}
+.rank-n{font-family:var(--font-display);font-size:13px;color:var(--stamp)}
+
+/* teaser */
+.teaser{display:flex;gap:16px;align-items:center;padding:14px}
+.teaser img{width:96px;height:96px;border-radius:10px;object-fit:cover;filter:saturate(.9)}
+.teaser .t{flex:1;display:flex;flex-direction:column;gap:6px}
+
+.btn{border:none;border-radius:10px;padding:11px 18px;font-weight:700;background:var(--ink);color:var(--paper);display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn.alt{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn.stampb{background:var(--stamp);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,14,22,.55);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.modal.on{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:680px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;display:flex;flex-direction:column}
+.sheet img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.sheet .b{padding:18px 20px 24px;display:flex;flex-direction:column;gap:12px}
+.sheet h3{font-family:var(--font-display);font-weight:400;font-size:24px}
+.sheet p{margin:0;max-width:65ch}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+
+/* puzzle */
+.pz-wrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:start}
+.board{display:grid;gap:3px;background:var(--ink);padding:3px;border-radius:12px;aspect-ratio:1;width:100%;max-width:520px;touch-action:manipulation}
+.tile{border:none;padding:0;background-size:cover;border-radius:4px;transition:transform .15s,box-shadow .15s;aspect-ratio:1}
+.tile.sel{transform:scale(.92);box-shadow:0 0 0 4px var(--gold)}
+.tile.ok{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.pz-side{display:flex;flex-direction:column;gap:12px}
+.pz-side .ref{width:100%;border-radius:10px;display:block}
+.pz-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pz-pick button{padding:0;border:2px solid transparent;border-radius:8px;overflow:hidden;background:none}
+.pz-pick button[aria-pressed="true"]{border-color:var(--stamp)}
+.pz-pick img{width:100%;display:block;aspect-ratio:1;object-fit:cover}
+.stat{display:flex;gap:10px}
+.stat div{flex:1;background:var(--tint);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.win{background:color-mix(in srgb,var(--jade) 12%,var(--surface));border:1.5px solid var(--jade);border-radius:12px;padding:14px;display:none;flex-direction:column;gap:8px}
+.win.on{display:flex}
+
+/* quiz */
+.quiz{padding:22px;display:flex;flex-direction:column;gap:16px;max-width:720px}
+.qhead{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.qtext{font-size:21px;font-weight:700;line-height:1.4}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:13px 16px;font-size:16px;display:flex;gap:12px;align-items:center}
+.opt .k{width:28px;height:28px;border-radius:50%;background:var(--tint);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.opt.right{border-color:var(--jade);background:color-mix(in srgb,var(--jade) 12%,var(--surface))}
+.opt.wrong{border-color:var(--stamp);background:color-mix(in srgb,var(--stamp) 10%,var(--surface))}
+.explain{border-left:4px solid var(--jade);padding:8px 14px;background:var(--tint);border-radius:0 10px 10px 0;display:none}
+.explain.on{display:block}
+.qdots{display:flex;gap:6px}
+.qdots i{flex:1;height:6px;border-radius:9px;background:var(--line)}
+.qdots i.r{background:var(--jade)}.qdots i.w{background:var(--stamp)}.qdots i.c{background:var(--ink)}
+
+/* AR */
+.ar-stage{position:relative;border-radius:14px;overflow:hidden;background:#0b0f17;aspect-ratio:4/3;display:grid;place-items:center;color:#cfd6e4}
+.ar-stage video,.ar-stage canvas,.ar-stage img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.ar-overlay{position:absolute;inset:0;pointer-events:none}
+.ar-overlay .br{position:absolute;width:44px;height:44px;border:4px solid #fff;opacity:.9}
+.br.tl{top:16px;left:16px;border-right:none;border-bottom:none;border-radius:10px 0 0 0}
+.br.tr{top:16px;right:16px;border-left:none;border-bottom:none;border-radius:0 10px 0 0}
+.br.bl{bottom:16px;left:16px;border-right:none;border-top:none;border-radius:0 0 0 10px}
+.br.bbr{bottom:16px;right:16px;border-left:none;border-top:none;border-radius:0 0 10px 0}
+.ar-label{position:absolute;left:50%;top:18%;transform:translateX(-50%);background:rgba(28,41,71,.82);color:#fff;padding:8px 14px;border-radius:12px;font-weight:700;white-space:nowrap;animation:bob 2.4s ease-in-out infinite;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+.ar-label:after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-bottom:none;border-top-color:rgba(28,41,71,.82)}
+@keyframes bob{50%{transform:translateX(-50%) translateY(-8px)}}
+.ar-empty{padding:24px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center;max-width:420px}
+.ar-empty .seal{width:56px;height:56px;font-size:28px}
+.ar-cols{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
+.mission{display:flex;flex-direction:column;gap:6px}
+.mission button{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:6px}
+.mission button[aria-pressed="true"]{border-color:var(--ink);background:var(--tint)}
+.mission img{width:44px;height:44px;border-radius:7px;object-fit:cover}
+.mission span{flex:1;font-size:14px;font-weight:500;line-height:1.25}
+.mission em{font-style:normal;font-size:12px;color:var(--stamp);font-weight:700}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .in{display:flex;max-width:980px;width:100%}
+nav.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:500;text-align:center;line-height:1.2}
+nav.tabs a svg{width:24px;height:24px}
+nav.tabs a[aria-current="page"]{color:var(--ink)}
+nav.tabs a[aria-current="page"] svg{color:var(--stamp)}
+
+@media (max-width:760px){
+  .hero{grid-template-columns:1fr}.hero img{min-height:160px;max-height:200px}
+  .rec{grid-template-columns:1fr}
+  .pz-wrap,.ar-cols{grid-template-columns:1fr}
+  .stamps{grid-template-columns:repeat(4,1fr)}
+  .brand small{display:none}
+}
+@media (max-width:420px){.brand h1{font-size:17px}.pts{padding:5px 9px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">忠</div>
+      <div style="min-width:0"><h1 data-t="appName"></h1><small data-t="tagline"></small></div>
+    </div>
+    <div class="pts" title="points"><i></i><span id="ptsVal">0</span>P</div>
+    <label for="lang" class="sr" style="position:absolute;left:-9999px">Language</label>
+    <select id="lang" class="lang">
+      <option value="ko">한국어</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ja">日本語</option>
+      <option value="vi">Tiếng Việt</option>
+    </select>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view" id="v-home">
+      <div class="card hero">
+        <figure class="hero-photo" style="margin:0">
+          <img id="heroOsong" src="images/osong.jpg" alt="" style="object-position:30% 50%">
+          <img id="heroAirport" src="images/airport.jpg" alt="" style="object-position:60% 45%">
+          <figcaption id="heroCap"></figcaption>
+        </figure>
+        <div class="txt">
+          <h2 data-t="welcome"></h2>
+          <p class="muted" style="margin:0" data-t="hubQ"></p>
+          <div class="hubs" id="hubs"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-h"><h2 data-t="recTitle"></h2></div>
+        <p class="muted" style="margin:6px 0 10px" data-t="interestQ"></p>
+        <div class="chips" id="interests"></div>
+      </div>
+      <div class="rec" id="recList"></div>
+
+      <div class="card teaser" id="teaser"></div>
+
+      <div class="card passport">
+        <div class="sec-h"><h2 data-t="passport"></h2><p id="stampCount"></p></div>
+        <div class="stamps" id="stamps"></div>
+        <div class="rank"><span id="rankName"></span><span class="muted" id="rankNext"></span></div>
+        <div class="meter"><span id="rankBar" style="width:0"></span></div>
+        <p class="note" data-t="howPoints"></p>
+      </div>
+    </section>
+
+    <!-- PLACES -->
+    <section class="view" id="v-places">
+      <div class="sec-h"><h2 data-t="placesTitle"></h2><p id="placesSub"></p></div>
+      <div class="grid" id="placeGrid"></div>
+    </section>
+
+    <!-- PUZZLE -->
+    <section class="view" id="v-puzzle">
+      <div class="sec-h"><h2 data-t="puzzleTitle"></h2></div>
+      <p class="muted" style="margin:-12px 0 0" data-t="puzzleHelp"></p>
+      <div class="pz-wrap">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="board" id="board" role="grid"></div>
+          <div class="win" id="win" role="status">
+            <b id="winText"></b>
+            <div class="row"><button class="btn" id="pzStory" data-t="listenStory"></button><button class="btn alt" id="pzAgain" data-t="again"></button></div>
+          </div>
+        </div>
+        <div class="pz-side">
+          <img class="ref" id="pzRef" alt="">
+          <b id="pzName"></b>
+          <div class="stat"><div><b id="pzMoves">0</b><span data-t="moves"></span></div><div><b id="pzTime">0:00</b><span data-t="time"></span></div></div>
+          <div class="row">
+            <span class="muted" style="font-size:14px" data-t="size"></span>
+            <div class="chips" id="pzSize"></div>
+          </div>
+          <button class="btn alt" id="pzShuffle" data-t="shuffle"></button>
+          <div class="pz-pick" id="pzPick"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AR -->
+    <section class="view" id="v-ar">
+      <div class="sec-h"><h2 data-t="arTitle"></h2></div>
+      <p class="muted" style="margin:-12px 0 0" data-t="arHelp"></p>
+      <div class="ar-cols">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="ar-stage" id="arStage">
+            <div class="ar-empty" id="arEmpty">
+              <div class="seal" aria-hidden="true">AR</div>
+              <b id="arMissionName"></b>
+              <span style="font-size:14px" data-t="arStart"></span>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" id="arCam" data-t="openCam"></button>
+            <button class="btn stampb" id="arShot" data-t="takePhoto" hidden></button>
+            <label class="btn alt" for="arFile" data-t="useCamApp"></label>
+            <input type="file" id="arFile" accept="image/*" capture="environment" hidden>
+          </div>
+          <p class="note" id="arMsg" role="status"></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <b data-t="chooseMission"></b>
+          <div class="mission" id="missions"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="view" id="v-quiz">
+      <div class="sec-h"><h2 data-t="quizTitle"></h2></div>
+      <div class="card quiz" id="quiz"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="menu"><div class="in" id="tabs"></div></nav>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="sheet">
+    <img id="mImg" alt="">
+    <div class="b">
+      <div class="meta muted" id="mMeta" style="font-size:13px"></div>
+      <h3 id="mTitle"></h3>
+      <p id="mDesc"></p>
+      <div class="row">
+        <button class="btn" id="mListen"></button>
+        <button class="btn alt" id="mPuzzle"></button>
+        <button class="btn alt" id="mAR"></button>
+        <button class="btn alt" id="mClose"></button>
+      </div>
+      <p class="note" id="mVoiceNote"></p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ================= DATA ================= */
+const HUBS={
+  osong:{lat:36.6201,lng:127.3273},
+  airport:{lat:36.7166,lng:127.4991}
+};
+const PLACES=[
+ {id:"cheongnamdae",lat:36.4604,lng:127.4889,tags:["history","walk","nature"],featured:true,photo:"images/cheongnamdae.jpg",photoSq:"images/cheongnamdae_sq.jpg",
+  region:{ko:"청주",en:"Cheongju",zh:"清州",ja:"清州",vi:"Cheongju"},
+  name:{ko:"청남대",en:"Cheongnamdae (Former Presidential Villa)",zh:"青南台(前总统别墅)",ja:"青南台(旧大統領別荘)",vi:"Cheongnamdae (Biệt thự Tổng thống cũ)"},
+  short:{ko:"대통령의 별장에서 모두의 쉼터로",en:"From presidential retreat to a park for everyone",zh:"从总统别墅变成大众休闲地",ja:"大統領の別荘から、みんなの憩いの場へ",vi:"Từ biệt thự tổng thống thành nơi dạo chơi của mọi người"},
+  desc:{
+   ko:"청남대는 '남쪽의 청와대'라는 뜻으로, 1983년 대청호 옆에 대통령 전용 별장으로 지어졌습니다. 20년 동안 일반인은 들어갈 수 없었지만, 2003년 4월 18일 국민에게 개방되었습니다. 지금은 역대 대통령의 이야기가 담긴 본관과 대청호를 따라 걷는 산책길을 누구나 둘러볼 수 있습니다.",
+   en:"Cheongnamdae means 'the Blue House of the South'. It was built in 1983 beside Daecheong Lake as a private vacation villa for Korea's presidents. For 20 years the public could not enter, but it opened to everyone on April 18, 2003. Today you can tour the main hall, which tells the stories of past presidents, and walk the lakeside trails.",
+   zh:"青南台意为\"南方的青瓦台\",1983年建于大清湖畔,是韩国总统专用的别墅。20年间普通人无法进入,2003年4月18日向公众开放。如今任何人都可以参观讲述历任总统故事的主楼,并沿着大清湖散步。",
+   ja:"青南台は「南の青瓦台」という意味で、1983年に大清湖のほとりに大統領専用の別荘として建てられました。20年間は一般の人は入れませんでしたが、2003年4月18日に国民に開放されました。今では歴代大統領の物語を紹介する本館や、大清湖沿いの散策路を誰でも楽しめます。",
+   vi:"Cheongnamdae có nghĩa là 'Nhà Xanh phương Nam', được xây năm 1983 bên hồ Daecheong làm biệt thự nghỉ dưỡng riêng của tổng thống. Suốt 20 năm người dân không được vào, đến ngày 18/4/2003 nơi này mở cửa cho mọi người. Ngày nay ai cũng có thể tham quan tòa nhà chính kể chuyện các đời tổng thống và đi dạo ven hồ."}},
+ {id:"sinchaeho",lat:36.6540,lng:127.6220,tags:["history","kids"],featured:true,photo:"images/sinchaeho.jpg",photoSq:"images/sinchaeho_sq.jpg",
+  region:{ko:"청주",en:"Cheongju",zh:"清州",ja:"清州",vi:"Cheongju"},
+  name:{ko:"단재 신채호 사당",en:"Shrine of Sin Chae-ho",zh:"丹斋申采浩祠堂",ja:"丹斎 申采浩祠堂",vi:"Đền thờ Sin Chae-ho"},
+  short:{ko:"독립운동가이자 역사학자를 기리는 곳",en:"Honoring an independence fighter and historian",zh:"纪念独立运动家、历史学家的地方",ja:"独立運動家で歴史学者の人物をしのぶ場所",vi:"Nơi tưởng nhớ nhà hoạt động độc lập và sử gia"},
+  desc:{
+   ko:"단재 신채호(1880~1936)는 독립운동가이자 역사학자, 언론인입니다. 어린 시절을 보낸 청주 낭성면 귀래리 옛 집터에 사당과 묘소가 있고, '정기문(正氣門)'이라는 문을 지나면 선생의 영정을 모신 사당이 나옵니다. 선생은 나라를 되찾기 위해 평생 싸우다 1936년 중국 뤼순 감옥에서 순국했습니다. 충청북도 기념물입니다.",
+   en:"Sin Chae-ho (pen name Danjae, 1880–1936) was an independence activist, historian and journalist. His shrine and tomb stand on the site of his childhood home in Gwirae-ri, Nangseong-myeon, Cheongju. Through the gate named Jeonggimun (正氣門) you reach the hall that holds his portrait. He fought all his life to win back Korea's independence and died in Lüshun Prison in China in 1936. It is a Chungcheongbuk-do Monument.",
+   zh:"丹斋申采浩(1880–1936)是独立运动家、历史学家和记者。祠堂和墓地位于他童年居住的清州琅城面归来里旧居址。穿过名为\"正气门\"的大门,便是供奉先生遗像的祠堂。他为恢复国家主权奋斗一生,1936年在中国旅顺监狱殉国。这里是忠清北道纪念物。",
+   ja:"丹斎・申采浩(1880〜1936)は、独立運動家であり歴史学者、言論人です。幼少期を過ごした清州市琅城面帰来里の旧宅跡に祠堂と墓所があります。「正気門」という門をくぐると、先生の肖像を祀る祠堂があります。国を取り戻すために生涯闘い、1936年に中国の旅順監獄で亡くなりました。忠清北道の記念物です。",
+   vi:"Danjae Sin Chae-ho (1880–1936) là nhà hoạt động độc lập, sử gia và nhà báo. Đền thờ và mộ của ông nằm trên nền ngôi nhà thời thơ ấu ở làng Gwirae, Nangseong, Cheongju. Đi qua cổng Jeonggimun (正氣門) là đến điện thờ chân dung ông. Ông đấu tranh cả đời để giành lại độc lập và mất trong nhà tù Lữ Thuận (Trung Quốc) năm 1936. Đây là Di tích tưởng niệm của tỉnh Chungcheongbuk-do."}},
+ {id:"ssalan",lat:36.6290,lng:127.6530,tags:["history","kids"],featured:true,photo:"images/ssalan.jpg",photoSq:"images/ssalan_sq.jpg",
+  region:{ko:"청주",en:"Cheongju",zh:"清州",ja:"清州",vi:"Cheongju"},
+  name:{ko:"쌀안장터 만세운동 기념비",en:"Ssalan Market Independence Memorial",zh:"米院集市万岁运动纪念碑",ja:"サランチャント万歳運動記念碑",vi:"Bia tưởng niệm phong trào Vạn tuế chợ Ssalan"},
+  short:{ko:"청주에서 가장 큰 3·1 만세운동이 일어난 장터",en:"Site of Cheongju's largest March 1st protest",zh:"清州规模最大的三一万岁运动发生地",ja:"清州で最大の三・一万歳運動が起きた市場",vi:"Nơi diễn ra cuộc biểu tình 1/3 lớn nhất Cheongju"},
+  desc:{
+   ko:"쌀안은 미원의 옛 이름입니다. 1919년 3월 30일 장날, 신경구·이용실 선생 등이 앞장서 미원과 낭성·가덕, 괴산 청천, 보은에서 모인 1천 명이 넘는 사람들과 함께 '대한독립만세'를 외쳤습니다. 이날 두 분이 순국하고 14명이 감옥에 갇혔으며, 당시 청주 지역에서 가장 크고 격렬한 만세운동으로 기록됩니다. 이를 기리는 기념비가 1996년 세워졌고, 지금도 매년 만세운동 재현 행사가 열립니다.",
+   en:"'Ssalan' is the old native name of Miwon. On the market day of March 30, 1919, Sin Gyeong-gu, Yi Yong-sil and others led more than a thousand people from Miwon, Nangseong, Gadeok, Cheongcheon and Boeun in shouting 'Long live Korean independence!' Two people were killed and 14 were imprisoned. It is recorded as the largest and fiercest independence protest in the Cheongju area at the time. This memorial was erected in 1996, and the protest is re-enacted every year.",
+   zh:"\"쌀안(米内)\"是米院的固有旧称。1919年3月30日集市日,申京求、李容实等人带领来自米院、琅城、加德、槐山青川和报恩的一千多人高呼\"大韩独立万岁\"。当天有两人殉国、14人入狱,被记录为当时清州地区规模最大、最激烈的万岁运动。纪念碑建于1996年,至今每年都会举行重现活动。",
+   ja:"「サラン(쌀안)」は米院(ミウォン)の昔の呼び名です。1919年3月30日の市の日、申京求・李容実らが先頭に立ち、米院や琅城・加徳、槐山の青川、報恩から集まった千人を超える人々と「大韓独立万歳」を叫びました。この日2人が亡くなり14人が投獄され、当時の清州地域で最も大きく激しい万歳運動として記録されています。1996年に記念碑が建てられ、今も毎年再現行事が開かれます。",
+   vi:"'Ssalan' là tên cũ của vùng Miwon. Vào phiên chợ ngày 30/3/1919, các ông Sin Gyeong-gu, Yi Yong-sil cùng hơn một nghìn người từ Miwon, Nangseong, Gadeok, Cheongcheon và Boeun đã hô vang 'Đại Hàn độc lập vạn tuế!'. Hôm đó hai người hy sinh và 14 người bị bỏ tù; đây được ghi nhận là cuộc biểu tình lớn và quyết liệt nhất vùng Cheongju thời bấy giờ. Bia tưởng niệm được dựng năm 1996 và lễ tái hiện được tổ chức hằng năm."}},
+ {id:"jikji",lat:36.6436,lng:127.4686,tags:["history","kids"],
+  region:{ko:"청주",en:"Cheongju",zh:"清州",ja:"清州",vi:"Cheongju"},
+  name:{ko:"직지 · 청주고인쇄박물관",en:"Jikji & Cheongju Early Printing Museum",zh:"直指 · 清州古印刷博物馆",ja:"直指・清州古印刷博物館",vi:"Jikji & Bảo tàng In ấn cổ Cheongju"},
+  short:{ko:"세계에서 가장 오래된 금속활자본",en:"World's oldest surviving metal-type book",zh:"现存最古老的金属活字本",ja:"現存最古の金属活字本",vi:"Sách in chữ kim loại cổ nhất còn lại"},
+  desc:{
+   ko:"1377년 청주 흥덕사에서 금속활자로 찍어 낸 「직지심체요절」은 현존하는 세계에서 가장 오래된 금속활자본입니다. 2001년 유네스코 세계기록유산에 등재되었고, 흥덕사 터 옆 청주고인쇄박물관에서 금속활자를 만들고 찍는 과정을 직접 볼 수 있습니다.",
+   en:"Jikji was printed with movable metal type at Heungdeoksa Temple in Cheongju in 1377, making it the oldest surviving book printed this way. It joined UNESCO's Memory of the World Register in 2001. Next to the temple site, the Cheongju Early Printing Museum shows how the metal type was cast and printed.",
+   zh:"《直指》于1377年在清州兴德寺用金属活字印刷,是现存世界上最古老的金属活字本。2001年被列入联合国教科文组织世界记忆名录。在兴德寺遗址旁的清州古印刷博物馆,可以看到金属活字的铸造与印刷过程。",
+   ja:"『直指』は1377年に清州の興徳寺で金属活字を使って刷られた、現存する世界最古の金属活字本です。2001年にユネスコ「世界の記憶」に登録されました。興徳寺跡の隣にある清州古印刷博物館では、活字づくりと印刷の工程を見学できます。",
+   vi:"Jikji được in bằng chữ kim loại tại chùa Heungdeoksa ở Cheongju năm 1377, là cuốn sách in chữ kim loại cổ nhất còn tồn tại trên thế giới. Năm 2001, Jikji được UNESCO ghi danh là Di sản Tư liệu Thế giới. Bảo tàng In ấn cổ Cheongju bên cạnh di chỉ chùa giới thiệu cách đúc chữ và in sách."}},
+ {id:"sangdang",lat:36.6853,lng:127.5404,tags:["walk","history","nature"],
+  region:{ko:"청주",en:"Cheongju",zh:"清州",ja:"清州",vi:"Cheongju"},
+  name:{ko:"청주 상당산성",en:"Sangdangsanseong Fortress",zh:"清州上党山城",ja:"清州 上党山城",vi:"Pháo đài Sangdangsanseong"},
+  short:{ko:"도심 가까이 걷는 조선의 돌성",en:"A Joseon stone fortress near the city",zh:"市区附近的朝鲜时代石城",ja:"街のすぐそばにある朝鮮時代の石城",vi:"Thành đá thời Joseon gần trung tâm"},
+  desc:{
+   ko:"청주 시내에서 가까운 산 위의 돌성으로, 성벽 둘레는 약 4.2km입니다. 지금 모습은 조선 시대 18세기에 고쳐 쌓은 것이며, 성벽을 따라 한 바퀴 걸으며 청주 시내와 산줄기를 내려다볼 수 있습니다.",
+   en:"This stone fortress sits on a hill close to downtown Cheongju, with walls about 4.2 km around. What you see today was rebuilt in the 18th century during the Joseon Dynasty. A walk along the wall gives views over the city and the ridgelines.",
+   zh:"这座石城位于清州市区附近的山上,城墙周长约4.2公里。现在的样子是朝鲜王朝18世纪重新修筑的。沿着城墙走一圈,可以俯瞰清州市区和连绵的山脉。",
+   ja:"清州市街のすぐ近くの山上にある石の城で、城壁の周囲は約4.2kmです。現在の姿は朝鮮時代の18世紀に築き直されたもの。城壁に沿って歩くと、清州の街並みと山並みを見渡せます。",
+   vi:"Pháo đài đá trên núi gần trung tâm Cheongju, tường thành dài khoảng 4,2 km. Diện mạo hiện nay được xây lại vào thế kỷ 18 thời Joseon. Đi bộ dọc tường thành, bạn có thể ngắm toàn cảnh thành phố và dãy núi."}},
+ {id:"beopjusa",lat:36.5420,lng:127.8330,tags:["history","nature"],
+  region:{ko:"보은",en:"Boeun",zh:"报恩",ja:"報恩",vi:"Boeun"},
+  name:{ko:"보은 법주사",en:"Beopjusa Temple",zh:"报恩法住寺",ja:"報恩 法住寺",vi:"Chùa Beopjusa"},
+  short:{ko:"유네스코 세계유산 산사",en:"UNESCO World Heritage mountain temple",zh:"联合国教科文组织世界遗产山寺",ja:"ユネスコ世界遺産の山寺",vi:"Chùa núi – Di sản Thế giới UNESCO"},
+  desc:{
+   ko:"속리산 자락의 법주사는 553년에 세워진 절로, 2018년 「산사, 한국의 산지승원」의 하나로 유네스코 세계유산에 등재되었습니다. 경내의 팔상전은 우리나라에 남아 있는 유일한 목조 5층탑입니다.",
+   en:"Beopjusa, at the foot of Songnisan Mountain, was founded in 553. In 2018 it was inscribed on the UNESCO World Heritage List as one of the 'Sansa, Buddhist Mountain Monasteries in Korea'. Its Palsangjeon Hall is the only wooden five-story pagoda left in Korea.",
+   zh:"法住寺位于俗离山脚下,创建于553年。2018年作为\"山寺,韩国的山地僧院\"之一被列入联合国教科文组织世界遗产。寺内的捌相殿是韩国现存唯一的木结构五层塔。",
+   ja:"俗離山のふもとにある法住寺は553年に創建されました。2018年に「山寺、韓国の山地僧院」の一つとしてユネスコ世界遺産に登録。境内の捌相殿は、韓国に残る唯一の木造五重塔です。",
+   vi:"Chùa Beopjusa dưới chân núi Songnisan được xây dựng năm 553. Năm 2018, chùa được UNESCO công nhận là Di sản Thế giới, thuộc nhóm 'Sansa – các tu viện trên núi ở Hàn Quốc'. Điện Palsangjeon là ngôi tháp gỗ năm tầng duy nhất còn lại ở Hàn Quốc."}},
+ {id:"pine",lat:36.5306,lng:127.8105,tags:["nature","photo"],
+  region:{ko:"보은",en:"Boeun",zh:"报恩",ja:"報恩",vi:"Boeun"},
+  name:{ko:"보은 정이품송",en:"Jeongipumsong Pine",zh:"报恩正二品松",ja:"報恩 正二品松",vi:"Cây thông Jeongipumsong"},
+  short:{ko:"왕에게 벼슬을 받은 소나무",en:"The pine tree that received a royal rank",zh:"被国王授予官职的松树",ja:"王から官位を授かった松",vi:"Cây thông được vua phong chức"},
+  desc:{
+   ko:"법주사로 가는 길목에 서 있는 약 600살 된 소나무입니다. 조선의 세조 임금이 지나갈 때 가지를 스스로 들어 올려 가마가 지나가게 했다는 이야기가 전해지고, 그 보답으로 정이품이라는 높은 벼슬을 받았다고 합니다. 천연기념물로 보호되고 있습니다.",
+   en:"This pine, about 600 years old, stands on the road to Beopjusa. Legend says that when King Sejo of Joseon passed by, the tree lifted its branches so his palanquin could go through. In return the king gave it Jeongipum, a high minister's rank. It is protected as a Natural Monument.",
+   zh:"这棵约600岁的松树矗立在通往法住寺的路边。相传朝鲜世祖经过时,松树自己抬起树枝让御轿通过,世祖便授予它\"正二品\"的高官品级。现为天然纪念物。",
+   ja:"法住寺へ向かう道沿いに立つ樹齢約600年の松です。朝鮮の世祖王が通るとき、松が自ら枝を持ち上げて輿を通したと伝えられ、その褒美に「正二品」という高い官位を授かったといいます。天然記念物に指定されています。",
+   vi:"Cây thông khoảng 600 tuổi đứng bên đường đến chùa Beopjusa. Tương truyền khi vua Sejo thời Joseon đi qua, cây tự nâng cành để kiệu vua đi qua, nên được vua phong chức Jeongipum (quan nhị phẩm). Cây được bảo vệ là Di tích Thiên nhiên."}},
+ {id:"jungangtap",lat:37.0153,lng:127.8622,tags:["history","photo","kids"],
+  region:{ko:"충주",en:"Chungju",zh:"忠州",ja:"忠州",vi:"Chungju"},
+  name:{ko:"충주 중앙탑",en:"Jungangtap Pagoda",zh:"忠州中央塔",ja:"忠州 中央塔",vi:"Tháp Jungangtap"},
+  short:{ko:"한반도 한가운데의 7층 석탑",en:"Seven-story pagoda at the heart of Korea",zh:"朝鲜半岛中心的七层石塔",ja:"朝鮮半島の真ん中に立つ七重石塔",vi:"Tháp đá 7 tầng giữa bán đảo"},
+  desc:{
+   ko:"정식 이름은 충주 탑평리 칠층석탑으로, 통일신라 시대에 세워졌습니다. 한반도의 한가운데에 있다고 해서 '중앙탑'이라 불리며, 통일신라 석탑 가운데 가장 큰 탑입니다. 남한강 옆 공원이 넓어 가족 나들이에 좋습니다.",
+   en:"Its official name is the Seven-story Stone Pagoda in Tappyeong-ri, Chungju, built in the Unified Silla period. People call it 'Jungangtap' (Central Pagoda) because it is said to stand at the center of the Korean Peninsula. It is the largest stone pagoda from Unified Silla, set in a riverside park by the Namhangang River.",
+   zh:"正式名称为忠州塔坪里七层石塔,建于统一新罗时期。因据说位于朝鲜半岛正中央而被称为\"中央塔\",是统一新罗石塔中最大的一座。塔旁的南汉江公园宽阔,适合家庭游玩。",
+   ja:"正式名は忠州塔坪里七層石塔で、統一新羅時代に建てられました。朝鮮半島のちょうど真ん中にあるといわれ「中央塔」と呼ばれます。統一新羅の石塔で最も大きく、南漢江沿いの広い公園は家族連れにも人気です。",
+   vi:"Tên chính thức là Tháp đá bảy tầng Tappyeong-ri, Chungju, được xây thời Silla Thống nhất. Tháp được gọi là 'Jungangtap' (Tháp Trung tâm) vì nằm ở giữa bán đảo Triều Tiên, và là tháp đá lớn nhất thời Silla Thống nhất. Công viên rộng ven sông Namhangang rất hợp cho gia đình."}},
+ {id:"cheongpung",lat:37.0006,lng:128.1683,tags:["history","photo","nature"],
+  region:{ko:"제천",en:"Jecheon",zh:"堤川",ja:"堤川",vi:"Jecheon"},
+  name:{ko:"제천 청풍문화재단지",en:"Cheongpung Cultural Heritage Complex",zh:"堤川清风文化遗产园区",ja:"堤川 清風文化財団地",vi:"Khu di sản văn hóa Cheongpung"},
+  short:{ko:"물에 잠길 뻔한 마을 유산을 옮겨 온 곳",en:"Village heritage saved from a dam lake",zh:"从水库淹没区迁来的村落遗产",ja:"ダム湖に沈むはずだった村の文化財",vi:"Di sản làng được cứu khỏi lòng hồ"},
+  desc:{
+   ko:"1985년 충주댐이 만들어지면서 물에 잠기게 된 청풍 지역의 누각, 관아, 옛집, 비석 등을 이곳으로 옮겨 복원했습니다. 언덕 위 한벽루와 팔영루에 서면 넓은 청풍호가 한눈에 들어옵니다.",
+   en:"When the Chungju Dam was completed in 1985, the Cheongpung area was flooded. Its pavilions, government office, old houses and stone monuments were moved here and restored. From Hanbyeongnu Pavilion on the hill you can see the whole of Cheongpung Lake.",
+   zh:"1985年忠州水库建成后,清风地区被淹没。当地的楼阁、官衙、古宅和石碑被迁移到这里重新修复。站在山坡上的寒碧楼,可以一览辽阔的清风湖。",
+   ja:"1985年に忠州ダムが完成し、清風地域は湖の底に沈みました。楼閣や官衙、古民家、石碑などをここへ移して復元しています。丘の上の寒碧楼からは、広い清風湖を一望できます。",
+   vi:"Khi đập Chungju hoàn thành năm 1985, vùng Cheongpung bị ngập nước. Các lầu gác, quan nha, nhà cổ và bia đá được di dời về đây và phục dựng. Từ lầu Hanbyeongnu trên đồi có thể ngắm toàn cảnh hồ Cheongpung."}},
+ {id:"uirimji",lat:37.1717,lng:128.2097,tags:["nature","walk","photo"],
+  region:{ko:"제천",en:"Jecheon",zh:"堤川",ja:"堤川",vi:"Jecheon"},
+  name:{ko:"제천 의림지",en:"Uirimji Reservoir",zh:"堤川义林池",ja:"堤川 義林池",vi:"Hồ chứa Uirimji"},
+  short:{ko:"우리나라에서 가장 오래된 저수지 중 하나",en:"One of Korea's oldest reservoirs",zh:"韩国最古老的水库之一",ja:"韓国最古級のため池",vi:"Một trong những hồ chứa cổ nhất Hàn Quốc"},
+  desc:{
+   ko:"삼한 시대에 만들어졌다고 전해지는, 우리나라에서 가장 오래된 저수지 가운데 하나입니다. 오래된 소나무와 정자가 호수를 둘러싸고 있어 산책하기 좋고, 국가지정 명승으로 지정되어 있습니다.",
+   en:"Said to have been built in the Samhan period, Uirimji is one of the oldest reservoirs in Korea. Old pine trees and pavilions surround the water, making it a pleasant walk, and it is designated a national Scenic Site.",
+   zh:"相传建于三韩时期,是韩国最古老的水库之一。湖边环绕着古松和亭子,适合散步,被指定为国家名胜。",
+   ja:"三韓時代に造られたと伝わる、韓国で最も古いため池の一つです。古い松と東屋が池を囲み、散策にぴったり。国の名勝に指定されています。",
+   vi:"Tương truyền được xây từ thời Tam Hàn, Uirimji là một trong những hồ chứa cổ nhất Hàn Quốc. Hàng thông cổ thụ và đình nghỉ bao quanh mặt hồ, rất hợp để dạo bộ. Đây là Danh thắng Quốc gia."}},
+ {id:"dodam",lat:36.9989,lng:128.3439,tags:["nature","photo"],
+  region:{ko:"단양",en:"Danyang",zh:"丹阳",ja:"丹陽",vi:"Danyang"},
+  name:{ko:"단양 도담삼봉",en:"Dodamsambong Peaks",zh:"丹阳岛潭三峰",ja:"丹陽 島潭三峰",vi:"Ba đỉnh Dodamsambong"},
+  short:{ko:"강 위에 솟은 세 개의 봉우리",en:"Three rock peaks rising from the river",zh:"江中耸立的三座山峰",ja:"川から突き出た三つの峰",vi:"Ba đỉnh đá nhô lên giữa sông"},
+  desc:{
+   ko:"남한강 물 위로 솟은 세 개의 바위 봉우리로, 단양팔경의 첫 번째 경치입니다. 조선을 세운 정도전이 이곳을 무척 아껴 자신의 호를 '삼봉'이라 지었다는 이야기가 전해집니다.",
+   en:"Three rocky peaks rise out of the Namhangang River here, the first of the 'Eight Scenic Views of Danyang'. Jeong Do-jeon, who helped found the Joseon Dynasty, is said to have loved this place so much that he took 'Sambong' (Three Peaks) as his pen name.",
+   zh:"三座岩石山峰从南汉江水面耸立,是\"丹阳八景\"之首。相传朝鲜开国功臣郑道传非常喜爱这里,便以\"三峰\"作为自己的号。",
+   ja:"南漢江の水面から三つの岩の峰がそびえる、「丹陽八景」の第一景です。朝鮮建国の功臣・鄭道伝はこの景色を深く愛し、自らの号を「三峰」にしたと伝えられています。",
+   vi:"Ba đỉnh đá nhô lên khỏi mặt sông Namhangang, là cảnh đầu tiên trong 'Tám cảnh đẹp Danyang'. Tương truyền Jeong Do-jeon, người góp công lập nên triều Joseon, yêu nơi này đến mức lấy hiệu là 'Sambong' (Ba đỉnh)."}}
+];
+
+const QUIZ=[
+ {a:2,q:{ko:"대통령 별장이던 청남대가 국민에게 개방된 해는?",en:"In what year was Cheongnamdae, the former presidential villa, opened to the public?",zh:"前总统别墅青南台是哪一年向公众开放的?",ja:"大統領の別荘だった青南台が一般に開放された年は?",vi:"Biệt thự tổng thống Cheongnamdae mở cửa cho công chúng năm nào?"},
+  o:{ko:["1983년","1993년","2003년","2013년"],en:["1983","1993","2003","2013"],zh:["1983年","1993年","2003年","2013年"],ja:["1983年","1993年","2003年","2013年"],vi:["1983","1993","2003","2013"]},p:"cheongnamdae"},
+ {a:0,q:{ko:"단재 신채호는 어떤 인물일까요?",en:"Who was Danjae Sin Chae-ho?",zh:"丹斋申采浩是什么样的人物?",ja:"丹斎・申采浩はどんな人物?",vi:"Danjae Sin Chae-ho là ai?"},
+  o:{ko:["독립운동가이자 역사학자","조선의 임금","고려의 장군","금속활자를 만든 스님"],en:["An independence activist and historian","A Joseon king","A Goryeo general","A monk who made metal type"],zh:["独立运动家、历史学家","朝鲜国王","高丽将军","制作金属活字的僧人"],ja:["独立運動家で歴史学者","朝鮮の王","高麗の将軍","金属活字を作った僧"],vi:["Nhà hoạt động độc lập và sử gia","Một vị vua Joseon","Một tướng Goryeo","Nhà sư làm chữ kim loại"]},p:"sinchaeho"},
+ {a:1,q:{ko:"쌀안장터 만세운동이 일어난 해는?",en:"In what year did the Ssalan Market independence protest take place?",zh:"米院集市万岁运动发生在哪一年?",ja:"サランチャントの万歳運動が起きた年は?",vi:"Cuộc biểu tình Vạn tuế ở chợ Ssalan diễn ra năm nào?"},
+  o:{ko:["1894년","1919년","1945년","1950년"],en:["1894","1919","1945","1950"],zh:["1894年","1919年","1945年","1950年"],ja:["1894年","1919年","1945年","1950年"],vi:["1894","1919","1945","1950"]},p:"ssalan"},
+ {a:1,q:{ko:"「직지」는 몇 년에 금속활자로 인쇄되었을까요?",en:"In what year was Jikji printed with metal type?",zh:"《直指》是哪一年用金属活字印刷的?",ja:"『直指』が金属活字で刷られたのは何年?",vi:"Jikji được in bằng chữ kim loại vào năm nào?"},
+  o:{ko:["1234년","1377년","1446년","1592년"],en:["1234","1377","1446","1592"],zh:["1234年","1377年","1446年","1592年"],ja:["1234年","1377年","1446年","1592年"],vi:["1234","1377","1446","1592"]},p:"jikji"},
+ {a:2,q:{ko:"「직지」를 인쇄한 절은 어디일까요?",en:"At which temple was Jikji printed?",zh:"《直指》是在哪座寺庙印刷的?",ja:"『直指』が刷られたお寺は?",vi:"Jikji được in tại ngôi chùa nào?"},
+  o:{ko:["법주사","불국사","흥덕사","해인사"],en:["Beopjusa","Bulguksa","Heungdeoksa","Haeinsa"],zh:["法住寺","佛国寺","兴德寺","海印寺"],ja:["法住寺","仏国寺","興徳寺","海印寺"],vi:["Beopjusa","Bulguksa","Heungdeoksa","Haeinsa"]},p:"jikji"},
+ {a:0,q:{ko:"지금 「직지」(하권) 원본이 보관된 곳은 어디일까요?",en:"Where is the surviving original volume of Jikji kept today?",zh:"《直指》现存的原本(下卷)收藏在哪里?",ja:"現存する『直指』(下巻)の原本はどこにある?",vi:"Bản gốc (quyển hạ) của Jikji hiện được lưu giữ ở đâu?"},
+  o:{ko:["프랑스 국립도서관","대영박물관","청주고인쇄박물관","미국 의회도서관"],en:["National Library of France","British Museum","Cheongju Early Printing Museum","Library of Congress (USA)"],zh:["法国国家图书馆","大英博物馆","清州古印刷博物馆","美国国会图书馆"],ja:["フランス国立図書館","大英博物館","清州古印刷博物館","アメリカ議会図書館"],vi:["Thư viện Quốc gia Pháp","Bảo tàng Anh","Bảo tàng In ấn cổ Cheongju","Thư viện Quốc hội Mỹ"]},p:"jikji"},
+ {a:0,q:{ko:"법주사 팔상전은 어떤 탑일까요?",en:"What kind of pagoda is Palsangjeon at Beopjusa?",zh:"法住寺捌相殿是什么样的塔?",ja:"法住寺の捌相殿はどんな塔?",vi:"Điện Palsangjeon ở chùa Beopjusa là loại tháp nào?"},
+  o:{ko:["우리나라 유일의 목조 5층탑","철로 만든 3층탑","벽돌로 쌓은 9층탑","돌로 만든 7층탑"],en:["Korea's only wooden five-story pagoda","An iron three-story pagoda","A brick nine-story pagoda","A stone seven-story pagoda"],zh:["韩国唯一的木结构五层塔","铁制三层塔","砖砌九层塔","石制七层塔"],ja:["韓国唯一の木造五重塔","鉄製の三重塔","レンガの九重塔","石造りの七重塔"],vi:["Tháp gỗ 5 tầng duy nhất ở Hàn Quốc","Tháp sắt 3 tầng","Tháp gạch 9 tầng","Tháp đá 7 tầng"]},p:"beopjusa"},
+ {a:3,q:{ko:"법주사가 유네스코 세계유산에 등재된 해는?",en:"In what year was Beopjusa inscribed as a UNESCO World Heritage Site?",zh:"法住寺哪一年被列入联合国教科文组织世界遗产?",ja:"法住寺がユネスコ世界遺産に登録された年は?",vi:"Chùa Beopjusa được UNESCO công nhận năm nào?"},
+  o:{ko:["1995년","2001년","2010년","2018년"],en:["1995","2001","2010","2018"],zh:["1995年","2001年","2010年","2018年"],ja:["1995年","2001年","2010年","2018年"],vi:["1995","2001","2010","2018"]},p:"beopjusa"},
+ {a:1,q:{ko:"정이품송에게 벼슬을 내린 조선의 임금은 누구일까요?",en:"Which Joseon king gave the Jeongipumsong Pine its rank?",zh:"给正二品松授予官职的是朝鲜哪位国王?",ja:"正二品松に官位を授けた朝鮮の王は?",vi:"Vị vua Joseon nào đã phong chức cho cây thông Jeongipumsong?"},
+  o:{ko:["태조","세조","세종","정조"],en:["King Taejo","King Sejo","King Sejong","King Jeongjo"],zh:["太祖","世祖","世宗","正祖"],ja:["太祖","世祖","世宗","正祖"],vi:["Vua Taejo","Vua Sejo","Vua Sejong","Vua Jeongjo"]},p:"pine"},
+ {a:2,q:{ko:"충주 탑평리 칠층석탑을 '중앙탑'이라 부르는 까닭은?",en:"Why is the Tappyeong-ri pagoda called 'Jungangtap' (Central Pagoda)?",zh:"塔坪里七层石塔为什么被称为\"中央塔\"?",ja:"塔坪里七層石塔が「中央塔」と呼ばれる理由は?",vi:"Vì sao tháp Tappyeong-ri được gọi là 'Tháp Trung tâm'?"},
+  o:{ko:["충주 시청 한가운데 있어서","절 마당 가운데 있어서","한반도의 한가운데에 있다고 해서","탑의 가운데 층이 가장 커서"],en:["It stands in the middle of City Hall","It stands in the middle of a temple yard","It is said to mark the center of the Korean Peninsula","Its middle story is the largest"],zh:["因为位于忠州市政府中央","因为位于寺院庭院中央","据说位于朝鲜半岛的正中央","因为塔的中间层最大"],ja:["忠州市役所の真ん中にあるから","寺の庭の真ん中にあるから","朝鮮半島の真ん中にあるといわれるから","真ん中の層がいちばん大きいから"],vi:["Vì nằm giữa tòa thị chính","Vì nằm giữa sân chùa","Vì được cho là nằm ở trung tâm bán đảo","Vì tầng giữa lớn nhất"]},p:"jungangtap"},
+ {a:3,q:{ko:"중앙탑은 몇 층 석탑일까요?",en:"How many stories does Jungangtap have?",zh:"中央塔是几层石塔?",ja:"中央塔は何層の石塔?",vi:"Tháp Jungangtap có bao nhiêu tầng?"},
+  o:{ko:["3층","5층","9층","7층"],en:["3","5","9","7"],zh:["3层","5层","9层","7层"],ja:["三層","五層","九層","七層"],vi:["3","5","9","7"]},p:"jungangtap"},
+ {a:0,q:{ko:"청풍문화재단지가 만들어진 이유는?",en:"Why was the Cheongpung Cultural Heritage Complex created?",zh:"清风文化遗产园区是为什么建立的?",ja:"清風文化財団地がつくられた理由は?",vi:"Vì sao Khu di sản Cheongpung được lập ra?"},
+  o:{ko:["충주댐 건설로 물에 잠길 유산을 옮기려고","새 도시를 만들려고","영화 촬영장을 만들려고","산불 피해를 복구하려고"],en:["To save heritage from flooding by the Chungju Dam","To build a new city","To build a film set","To repair wildfire damage"],zh:["为迁移因忠州水库而被淹没的遗产","为建设新城市","为建造电影拍摄地","为修复山火损失"],ja:["忠州ダムで沈む文化財を移すため","新しい都市をつくるため","映画のセットをつくるため","山火事の被害を直すため"],vi:["Để cứu di sản khỏi bị đập Chungju nhấn chìm","Để xây thành phố mới","Để làm phim trường","Để khắc phục cháy rừng"]},p:"cheongpung"},
+ {a:2,q:{ko:"오래된 저수지 '의림지'가 있는 도시는?",en:"Which city is home to the ancient Uirimji Reservoir?",zh:"古老的义林池位于哪个城市?",ja:"古いため池「義林池」がある都市は?",vi:"Hồ chứa cổ Uirimji nằm ở thành phố nào?"},
+  o:{ko:["청주","충주","제천","단양"],en:["Cheongju","Chungju","Jecheon","Danyang"],zh:["清州","忠州","堤川","丹阳"],ja:["清州","忠州","堤川","丹陽"],vi:["Cheongju","Chungju","Jecheon","Danyang"]},p:"uirimji"},
+ {a:1,q:{ko:"도담삼봉을 좋아해 호를 '삼봉'이라 지었다는 인물은?",en:"Who loved Dodamsambong so much he took 'Sambong' as his pen name?",zh:"因喜爱岛潭三峰而以\"三峰\"为号的人物是谁?",ja:"島潭三峰を愛し、号を「三峰」とした人物は?",vi:"Ai yêu Dodamsambong đến mức lấy hiệu là 'Sambong'?"},
+  o:{ko:["이순신","정도전","김정호","세종대왕"],en:["Yi Sun-sin","Jeong Do-jeon","Kim Jeong-ho","King Sejong"],zh:["李舜臣","郑道传","金正浩","世宗大王"],ja:["李舜臣","鄭道伝","金正浩","世宗大王"],vi:["Yi Sun-sin","Jeong Do-jeon","Kim Jeong-ho","Vua Sejong"]},p:"dodam"},
+ {a:3,q:{ko:"청주 상당산성의 성벽 둘레는 약 얼마일까요?",en:"About how long is the wall around Sangdangsanseong Fortress?",zh:"清州上党山城的城墙周长大约是多少?",ja:"清州・上党山城の城壁の周囲はおよそ何km?",vi:"Tường thành Sangdangsanseong dài khoảng bao nhiêu?"},
+  o:{ko:["약 400m","약 1km","약 12km","약 4.2km"],en:["About 400 m","About 1 km","About 12 km","About 4.2 km"],zh:["约400米","约1公里","约12公里","约4.2公里"],ja:["約400m","約1km","約12km","約4.2km"],vi:["Khoảng 400 m","Khoảng 1 km","Khoảng 12 km","Khoảng 4,2 km"]},p:"sangdang"}
+];
+
+const I18N={
+ ko:{appName:"충북 헤리티지 패스",tagline:"오송역·청주공항에서 시작하는 충북 문화유산 여행",welcome:"충북에 오신 것을 환영합니다!",hubQ:"어디로 도착하셨나요? 도착지에서 가까운 곳부터 알려 드릴게요.",osong:"오송역",osongSub:"KTX·SRT",airport:"청주국제공항",airportSub:"CJJ",recTitle:"나에게 맞는 추천 여행지",interestQ:"관심 있는 것을 골라 주세요 (여러 개 선택 가능)",int_history:"역사",int_nature:"자연·풍경",int_photo:"사진 명소",int_walk:"산책",int_kids:"아이와 함께",why:"{t} 관심과 맞아요",whyNear:"도착지에서 가까워요",km:"{hub}에서 직선 약 {km}km",passport:"나의 문화유산 여권",stampsOf:"도장 {n} / {t}",howPoints:"AR 촬영 +100P · 퍼즐 첫 완성 +50P (다시 하면 +10P) · 퀴즈 정답 +20P",rank0:"새내기 여행자",rank1:"충북 탐험가",rank2:"문화유산 지킴이",rank3:"충북 명예 홍보대사",toNext:"다음 등급까지 {n}P",maxRank:"최고 등급 달성!",teaserT:"오늘의 문화유산 퍼즐",teaserD:"이동하는 동안 그림 조각을 맞춰 보세요. 다 맞추면 이야기를 들려드려요.",play:"퍼즐 시작",placesTitle:"충북의 문화유산",placesSub:"카드를 누르면 설명과 음성 안내를 볼 수 있어요",collected:"도장 받음",listen:"이야기 듣기",stop:"멈추기",toPuzzle:"퍼즐로 놀기",toAR:"AR 도장 받기",close:"닫기",noVoice:"이 기기에 해당 언어 음성이 없어 기본 음성으로 읽어요.",noTTS:"이 브라우저는 음성 읽기를 지원하지 않아요.",puzzleTitle:"문화유산 그림 퍼즐",puzzleHelp:"조각 두 개를 차례로 누르면 자리가 바뀌어요. 오른쪽 그림처럼 맞춰 보세요.",moves:"이동",time:"시간",size:"난이도",shuffle:"다시 섞기",solvedFirst:"완성! {name} 퍼즐을 처음 맞춰서 +50P",solvedAgain:"완성! +10P",listenStory:"이야기 듣기",again:"다른 퍼즐",arTitle:"AR 문화유산 도장 찍기",arHelp:"현장에서 문화유산을 카메라로 찍으면 화면 위에 정보가 겹쳐 보이고, 도장과 100P를 받아요.",arStart:"오른쪽에서 미션을 고르고 카메라를 켜 주세요.",openCam:"카메라 켜기",takePhoto:"촬영하기",useCamApp:"사진 찍어 올리기",chooseMission:"촬영할 문화유산 고르기",arDone:"{name} 도장 획득! +100P",arAlready:"이미 도장을 받은 곳이에요. 멋진 사진이네요!",camFail:"이 화면에서는 실시간 카메라를 쓸 수 없어요. '사진 찍어 올리기'를 누르면 휴대폰 카메라로 바로 찍을 수 있어요.",arHint:"문화유산이 사각형 안에 들어오게 맞춘 뒤 촬영하세요.",quizTitle:"충북 문화유산 퀴즈",quizIntro:"무작위로 나오는 5문제에 도전해 보세요. 맞힐 때마다 20P!",start:"퀴즈 시작",next:"다음 문제",finish:"결과 보기",correct:"정답이에요! +20P",wrong:"아쉬워요. 정답은 '{a}'",result:"5문제 중 {n}개를 맞혔어요!",retry:"다시 도전",qOf:"{i} / 5 문제",learnMore:"관련 문화유산 보기",nav_home:"홈",nav_places:"문화유산",nav_puzzle:"퍼즐",nav_ar:"AR 촬영",nav_quiz:"퀴즈",nearest:"{hub} 기준 가까운 순"},
+ en:{appName:"Chungbuk Heritage Pass",tagline:"Heritage travel from Osong Station & Cheongju Airport",welcome:"Welcome to Chungbuk!",hubQ:"Where did you arrive? We'll start with places near you.",osong:"Osong Station",osongSub:"KTX·SRT",airport:"Cheongju Int'l Airport",airportSub:"CJJ",recTitle:"Recommended for you",interestQ:"Pick what you're interested in (choose any)",int_history:"History",int_nature:"Nature & views",int_photo:"Photo spots",int_walk:"Walks",int_kids:"With kids",why:"Matches your interest: {t}",whyNear:"Close to where you arrived",km:"About {km} km from {hub} (straight line)",passport:"My Heritage Passport",stampsOf:"Stamps {n} / {t}",howPoints:"AR photo +100P · First puzzle solve +50P (repeat +10P) · Correct quiz answer +20P",rank0:"New Traveler",rank1:"Chungbuk Explorer",rank2:"Heritage Keeper",rank3:"Honorary Chungbuk Ambassador",toNext:"{n}P to next level",maxRank:"Top level reached!",teaserT:"Today's heritage puzzle",teaserD:"Put the picture back together on your way. Finish it to hear the story.",play:"Start puzzle",placesTitle:"Chungbuk Heritage Sites",placesSub:"Tap a card for details and audio guide",collected:"Stamped",listen:"Listen to the story",stop:"Stop",toPuzzle:"Play the puzzle",toAR:"Get AR stamp",close:"Close",noVoice:"No voice for this language on your device, so the default voice is used.",noTTS:"This browser can't read text aloud.",puzzleTitle:"Heritage Picture Puzzle",puzzleHelp:"Tap two pieces to swap them. Match the picture on the right.",moves:"Moves",time:"Time",size:"Level",shuffle:"Shuffle",solvedFirst:"Solved! First time for {name}: +50P",solvedAgain:"Solved! +10P",listenStory:"Listen to the story",again:"Another puzzle",arTitle:"AR Heritage Stamps",arHelp:"Photograph a heritage site on location to see information over your view and earn a stamp plus 100P.",arStart:"Choose a mission on the right, then turn on the camera.",openCam:"Turn on camera",takePhoto:"Take photo",useCamApp:"Take & upload a photo",chooseMission:"Choose a site to photograph",arDone:"{name} stamp collected! +100P",arAlready:"You already have this stamp. Great photo!",camFail:"Live camera isn't available on this screen. Tap 'Take & upload a photo' to use your phone camera directly.",arHint:"Fit the site inside the frame, then take the photo.",quizTitle:"Chungbuk Heritage Quiz",quizIntro:"Try 5 random questions. Each correct answer earns 20P!",start:"Start quiz",next:"Next question",finish:"See results",correct:"Correct! +20P",wrong:"Not quite. The answer is '{a}'",result:"You got {n} out of 5!",retry:"Try again",qOf:"Question {i} of 5",learnMore:"See this heritage site",nav_home:"Home",nav_places:"Heritage",nav_puzzle:"Puzzle",nav_ar:"AR Photo",nav_quiz:"Quiz",nearest:"Nearest to {hub} first"},
+ zh:{appName:"忠北遗产通行证",tagline:"从五松站和清州机场出发的文化遗产之旅",welcome:"欢迎来到忠清北道!",hubQ:"您从哪里到达?我们会先推荐附近的地方。",osong:"五松站",osongSub:"KTX·SRT",airport:"清州国际机场",airportSub:"CJJ",recTitle:"为您推荐",interestQ:"请选择感兴趣的内容(可多选)",int_history:"历史",int_nature:"自然风景",int_photo:"拍照胜地",int_walk:"散步",int_kids:"亲子",why:"符合您的兴趣:{t}",whyNear:"离到达地点很近",km:"距{hub}直线约{km}公里",passport:"我的文化遗产护照",stampsOf:"印章 {n} / {t}",howPoints:"AR拍摄 +100P · 首次完成拼图 +50P(再玩 +10P) · 答对测验 +20P",rank0:"新手旅行者",rank1:"忠北探险家",rank2:"文化遗产守护者",rank3:"忠北荣誉宣传大使",toNext:"距下一级还差{n}P",maxRank:"已达到最高等级!",teaserT:"今日文化遗产拼图",teaserD:"旅途中来拼一拼吧,完成后为您讲述背后的故事。",play:"开始拼图",placesTitle:"忠北文化遗产",placesSub:"点击卡片查看介绍和语音导览",collected:"已盖章",listen:"收听故事",stop:"停止",toPuzzle:"玩拼图",toAR:"获取AR印章",close:"关闭",noVoice:"设备上没有该语言的语音,将使用默认语音。",noTTS:"此浏览器不支持朗读。",puzzleTitle:"文化遗产拼图",puzzleHelp:"依次点击两块拼图即可交换位置,拼成右侧的图案。",moves:"步数",time:"时间",size:"难度",shuffle:"重新打乱",solvedFirst:"完成!首次完成{name}拼图 +50P",solvedAgain:"完成!+10P",listenStory:"收听故事",again:"换一个拼图",arTitle:"AR文化遗产集章",arHelp:"在现场用相机拍摄文化遗产,画面上会叠加介绍信息,并获得印章和100P。",arStart:"请在右侧选择任务,然后打开相机。",openCam:"打开相机",takePhoto:"拍摄",useCamApp:"拍照并上传",chooseMission:"选择要拍摄的文化遗产",arDone:"获得{name}印章!+100P",arAlready:"已经获得过这个印章了,照片拍得真好!",camFail:"此页面无法使用实时相机。点击\"拍照并上传\"即可直接用手机相机拍摄。",arHint:"让文化遗产进入取景框后再拍摄。",quizTitle:"忠北文化遗产测验",quizIntro:"挑战随机5道题,每答对一题得20P!",start:"开始测验",next:"下一题",finish:"查看结果",correct:"答对了!+20P",wrong:"可惜,正确答案是\"{a}\"",result:"5道题答对了{n}道!",retry:"再挑战一次",qOf:"第{i}题 / 共5题",learnMore:"查看相关文化遗产",nav_home:"首页",nav_places:"文化遗产",nav_puzzle:"拼图",nav_ar:"AR拍摄",nav_quiz:"测验",nearest:"按距{hub}远近排序"},
+ ja:{appName:"忠北ヘリテージパス",tagline:"五松駅・清州空港から始める忠北の文化遺産めぐり",welcome:"忠清北道へようこそ!",hubQ:"どちらに到着しましたか?近い場所からご案内します。",osong:"五松駅",osongSub:"KTX·SRT",airport:"清州国際空港",airportSub:"CJJ",recTitle:"あなたへのおすすめ",interestQ:"興味のあるものを選んでください(複数可)",int_history:"歴史",int_nature:"自然・景色",int_photo:"写真スポット",int_walk:"散策",int_kids:"子連れ",why:"「{t}」に興味のある方に",whyNear:"到着地から近い",km:"{hub}から直線で約{km}km",passport:"わたしの文化遺産パスポート",stampsOf:"スタンプ {n} / {t}",howPoints:"AR撮影 +100P · パズル初クリア +50P(2回目以降 +10P) · クイズ正解 +20P",rank0:"はじめての旅人",rank1:"忠北探検家",rank2:"文化遺産の守り手",rank3:"忠北名誉観光大使",toNext:"次のランクまであと{n}P",maxRank:"最高ランク達成!",teaserT:"今日の文化遺産パズル",teaserD:"移動中に絵のピースをそろえてみましょう。完成すると物語をお聞かせします。",play:"パズルを始める",placesTitle:"忠北の文化遺産",placesSub:"カードをタップすると解説と音声ガイドが見られます",collected:"スタンプ済み",listen:"物語を聞く",stop:"停止",toPuzzle:"パズルで遊ぶ",toAR:"ARスタンプをもらう",close:"閉じる",noVoice:"この言語の音声が端末にないため、標準の音声で読み上げます。",noTTS:"このブラウザは読み上げに対応していません。",puzzleTitle:"文化遺産パズル",puzzleHelp:"ピースを2つ順にタップすると入れ替わります。右の絵のとおりにそろえましょう。",moves:"手数",time:"時間",size:"難易度",shuffle:"シャッフル",solvedFirst:"完成!{name}を初クリア +50P",solvedAgain:"完成!+10P",listenStory:"物語を聞く",again:"別のパズル",arTitle:"AR文化遺産スタンプラリー",arHelp:"現地で文化遺産を撮影すると、画面に情報が重なって表示され、スタンプと100Pがもらえます。",arStart:"右側でミッションを選び、カメラをオンにしてください。",openCam:"カメラをオン",takePhoto:"撮影する",useCamApp:"写真を撮ってアップ",chooseMission:"撮影する文化遺産を選ぶ",arDone:"{name}のスタンプ獲得!+100P",arAlready:"このスタンプはもう持っています。素敵な写真ですね!",camFail:"この画面ではライブカメラが使えません。「写真を撮ってアップ」を押すとスマホのカメラで直接撮影できます。",arHint:"文化遺産を枠の中に入れてから撮影してください。",quizTitle:"忠北文化遺産クイズ",quizIntro:"ランダムに出る5問に挑戦!正解ごとに20P。",start:"クイズを始める",next:"次の問題",finish:"結果を見る",correct:"正解!+20P",wrong:"残念。正解は「{a}」",result:"5問中{n}問正解!",retry:"もう一度挑戦",qOf:"第{i}問 / 5問",learnMore:"この文化遺産を見る",nav_home:"ホーム",nav_places:"文化遺産",nav_puzzle:"パズル",nav_ar:"AR撮影",nav_quiz:"クイズ",nearest:"{hub}から近い順"},
+ vi:{appName:"Chungbuk Heritage Pass",tagline:"Du lịch di sản từ ga Osong và sân bay Cheongju",welcome:"Chào mừng bạn đến Chungbuk!",hubQ:"Bạn đến từ đâu? Chúng tôi sẽ gợi ý các điểm gần nhất trước.",osong:"Ga Osong",osongSub:"KTX·SRT",airport:"Sân bay QT Cheongju",airportSub:"CJJ",recTitle:"Gợi ý dành cho bạn",interestQ:"Chọn điều bạn quan tâm (chọn nhiều được)",int_history:"Lịch sử",int_nature:"Thiên nhiên",int_photo:"Chụp ảnh",int_walk:"Đi dạo",int_kids:"Đi cùng trẻ em",why:"Phù hợp sở thích: {t}",whyNear:"Gần nơi bạn đến",km:"Cách {hub} khoảng {km} km (đường chim bay)",passport:"Hộ chiếu di sản của tôi",stampsOf:"Con dấu {n} / {t}",howPoints:"Chụp AR +100P · Ghép xong lần đầu +50P (lần sau +10P) · Trả lời đúng +20P",rank0:"Lữ khách mới",rank1:"Nhà thám hiểm Chungbuk",rank2:"Người gìn giữ di sản",rank3:"Đại sứ danh dự Chungbuk",toNext:"Còn {n}P để lên cấp",maxRank:"Đã đạt cấp cao nhất!",teaserT:"Trò ghép hình di sản hôm nay",teaserD:"Ghép lại bức tranh trên đường đi. Ghép xong sẽ được nghe câu chuyện.",play:"Bắt đầu ghép hình",placesTitle:"Di sản văn hóa Chungbuk",placesSub:"Chạm vào thẻ để xem giới thiệu và nghe thuyết minh",collected:"Đã đóng dấu",listen:"Nghe câu chuyện",stop:"Dừng",toPuzzle:"Chơi ghép hình",toAR:"Nhận dấu AR",close:"Đóng",noVoice:"Thiết bị không có giọng đọc cho ngôn ngữ này, sẽ dùng giọng mặc định.",noTTS:"Trình duyệt này không hỗ trợ đọc văn bản.",puzzleTitle:"Ghép hình di sản",puzzleHelp:"Chạm lần lượt vào hai mảnh để đổi chỗ. Ghép giống bức tranh bên phải.",moves:"Lượt",time:"Thời gian",size:"Độ khó",shuffle:"Xáo trộn",solvedFirst:"Hoàn thành! Lần đầu ghép {name}: +50P",solvedAgain:"Hoàn thành! +10P",listenStory:"Nghe câu chuyện",again:"Ghép hình khác",arTitle:"Đóng dấu di sản bằng AR",arHelp:"Chụp ảnh di sản tại chỗ để xem thông tin hiện trên màn hình, nhận con dấu và 100P.",arStart:"Chọn nhiệm vụ bên phải rồi bật camera.",openCam:"Bật camera",takePhoto:"Chụp ảnh",useCamApp:"Chụp & tải ảnh lên",chooseMission:"Chọn di sản để chụp",arDone:"Nhận dấu {name}! +100P",arAlready:"Bạn đã có con dấu này rồi. Ảnh đẹp quá!",camFail:"Màn hình này không dùng được camera trực tiếp. Nhấn 'Chụp & tải ảnh lên' để chụp bằng camera điện thoại.",arHint:"Đưa di sản vào trong khung rồi chụp.",quizTitle:"Câu đố di sản Chungbuk",quizIntro:"Thử sức với 5 câu hỏi ngẫu nhiên. Mỗi câu đúng được 20P!",start:"Bắt đầu",next:"Câu tiếp theo",finish:"Xem kết quả",correct:"Chính xác! +20P",wrong:"Tiếc quá. Đáp án là '{a}'",result:"Bạn đúng {n} / 5 câu!",retry:"Chơi lại",qOf:"Câu {i} / 5",learnMore:"Xem di sản này",nav_home:"Trang chủ",nav_places:"Di sản",nav_puzzle:"Ghép hình",nav_ar:"Chụp AR",nav_quiz:"Câu đố",nearest:"Gần {hub} nhất trước"}
+};
+const VOICE={ko:"ko-KR",en:"en-US",zh:"zh-CN",ja:"ja-JP",vi:"vi-VN"};
+const RANKS=[0,200,500,900];
+
+/* ================= STATE ================= */
+const store={get(k,d){try{const v=localStorage.getItem("cbhp_"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("cbhp_"+k,JSON.stringify(v))}catch(e){}}};
+const S={
+  lang:store.get("lang",(navigator.language||"ko").slice(0,2)),
+  hub:store.get("hub","osong"),
+  points:store.get("points",0),
+  stamps:store.get("stamps",[]),
+  solved:store.get("solved",[]),
+  interests:store.get("interests",["history"])
+};
+if(!I18N[S.lang]) S.lang="ko";
+const save=()=>{["lang","hub","points","stamps","solved","interests"].forEach(k=>store.set(k,S[k]))};
+const $=id=>document.getElementById(id);
+const T=(k,vars)=>{let s=(I18N[S.lang][k]??I18N.ko[k]??k);if(vars)for(const v in vars)s=s.split("{"+v+"}").join(vars[v]);return s};
+const L=o=>o[S.lang]||o.ko;
+const P=id=>PLACES.find(p=>p.id===id);
+
+function km(a,b){const R=6371,r=x=>x*Math.PI/180;const dLat=r(b.lat-a.lat),dLng=r(b.lng-a.lng);const h=Math.sin(dLat/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+const dist=p=>Math.round(km(HUBS[S.hub],p));
+const hubName=()=>T(S.hub);
+
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("on"),2600)}
+function addPoints(n){S.points+=n;save();$("ptsVal").textContent=S.points;renderPassport()}
+
+/* ================= ILLUSTRATIONS (canvas, original) ================= */
+function rng(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function sky(c,top,bot,h){const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,top);g.addColorStop(1,bot);c.fillStyle=g;c.fillRect(0,0,600,h)}
+function ridge(c,base,amp,color,seed,step){const r=rng(seed);c.fillStyle=color;c.beginPath();c.moveTo(0,600);c.lineTo(0,base);for(let x=0;x<=600;x+=step){c.lineTo(x,base-r()*amp-Math.sin(x/90+seed)*amp*.5)}c.lineTo(600,600);c.closePath();c.fill()}
+function sun(c,x,y,r,col){c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+function roof(c,cx,y,w,h,col){c.fillStyle=col;c.beginPath();c.moveTo(cx-w/2-10,y-8);c.quadraticCurveTo(cx-w/2+w*.12,y+2,cx-w*.32,y-h);c.lineTo(cx+w*.32,y-h);c.quadraticCurveTo(cx+w/2-w*.12,y+2,cx+w/2+10,y-8);c.lineTo(cx+w/2-6,y);c.lineTo(cx-w/2+6,y);c.closePath();c.fill()}
+function body(c,cx,y,w,h,col){c.fillStyle=col;c.fillRect(cx-w/2,y-h,w,h)}
+function pine(c,x,y,s,col,trunk){c.strokeStyle=trunk;c.lineWidth=5*s;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+8*s,y-40*s,x-4*s,y-80*s);c.stroke();c.fillStyle=col;[[0,-80,34],[14,-60,26],[-16,-56,24],[6,-98,22]].forEach(([dx,dy,r])=>{c.beginPath();c.ellipse(x+dx*s,y+dy*s,r*s,r*.45*s,0,0,7);c.fill()})}
+function water(c,y,col,col2){c.fillStyle=col;c.fillRect(0,y,600,600-y);c.strokeStyle=col2;c.lineWidth=3;for(let i=0;i<9;i++){const yy=y+18+i*22;c.beginPath();for(let x=-20;x<620;x+=40){c.moveTo(x+(i%2)*20,yy);c.quadraticCurveTo(x+10+(i%2)*20,yy-5,x+20+(i%2)*20,yy)}c.stroke()}}
+function stoneP(c,cx,base,levels,w0,col,dark){let y=base,w=w0;c.fillStyle=dark;c.fillRect(cx-w0*.75,base-18,w0*1.5,18);y-=18;for(let i=0;i<levels;i++){const bh=26-i*1.4;c.fillStyle=col;c.fillRect(cx-w*.36,y-bh,w*.72,bh);c.fillStyle=dark;c.beginPath();c.moveTo(cx-w/2-4,y-bh);c.lineTo(cx+w/2+4,y-bh);c.lineTo(cx+w/2-6,y-bh-9);c.lineTo(cx-w/2+6,y-bh-9);c.closePath();c.fill();y-=bh+9;w*=.9}c.fillStyle=dark;c.fillRect(cx-3,y-40,6,40);[0,1,2].forEach(i=>{c.beginPath();c.arc(cx,y-10-i*11,5,0,7);c.fill()})}
+const SCENES={
+ jikji(c){sky(c,"#e9d9b8","#d8c49a",600);c.fillStyle="#b9a274";c.fillRect(0,470,600,130);
+  // open book
+  c.fillStyle="#f7efdc";c.beginPath();c.moveTo(70,150);c.quadraticCurveTo(190,120,300,160);c.lineTo(300,470);c.quadraticCurveTo(190,430,70,460);c.closePath();c.fill();
+  c.beginPath();c.moveTo(530,150);c.quadraticCurveTo(410,120,300,160);c.lineTo(300,470);c.quadraticCurveTo(410,430,530,460);c.closePath();c.fill();
+  c.strokeStyle="#8b6b3d";c.lineWidth=3;c.beginPath();c.moveTo(300,160);c.lineTo(300,470);c.stroke();
+  c.fillStyle="#2a2018";c.font="bold 30px serif";c.textAlign="center";const ch="直指心體要節白雲和尚抄錄佛祖";let k=0;
+  for(let col=0;col<4;col++)for(let row=0;row<6;row++){c.fillText(ch[k++%ch.length],250-col*44,205+row*42);}
+  k=3;for(let col=0;col<4;col++)for(let row=0;row<6;row++){c.fillText(ch[k++%ch.length],480-col*44,205+row*42);}
+  c.strokeStyle="#b53b26";c.lineWidth=4;c.strokeRect(440,180,60,60);c.fillStyle="#b53b26";c.font="bold 22px serif";c.fillText("興德",470,218);
+  // metal type blocks
+  for(let i=0;i<5;i++){const x=130+i*72,y=500;c.fillStyle="#6f6a5e";c.fillRect(x,y,52,52);c.fillStyle="#8e897b";c.fillRect(x,y,52,10);c.fillStyle="#3b382f";c.font="bold 26px serif";c.fillText("直指心體要"[i],x+26,y+42)}},
+ sangdang(c){sky(c,"#9fc4e0","#e6eff3",420);sun(c,480,100,40,"#fff3c9");ridge(c,300,60,"#7d9fb3",4,30);ridge(c,360,50,"#4f7a5e",8,24);
+  c.fillStyle="#3b6247";c.fillRect(0,430,600,170);
+  // wall
+  c.fillStyle="#c9c3b3";c.beginPath();c.moveTo(-10,470);c.quadraticCurveTo(300,350,610,450);c.lineTo(610,520);c.quadraticCurveTo(300,420,-10,540);c.closePath();c.fill();
+  c.strokeStyle="#a29b88";c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.moveTo(-10,482+i*12);c.quadraticCurveTo(300,362+i*12,610,462+i*12);c.stroke()}
+  for(let x=0;x<600;x+=26){const yy=470-(Math.sin(x/600*Math.PI))*92-((x/600)*-20);c.fillStyle="#d8d2c2";c.fillRect(x,yy-14,16,14)}
+  // gate
+  body(c,300,410,120,70,"#b8b09c");c.fillStyle="#2e2a24";c.beginPath();c.moveTo(270,410);c.lineTo(270,370);c.arc(300,370,30,Math.PI,0);c.lineTo(330,410);c.fill();
+  body(c,300,340,100,40,"#8a2f22");roof(c,300,302,150,30,"#2f3a3a");pine(c,80,560,1,"#2c4a35","#5a3d2a");pine(c,540,580,1.1,"#2c4a35","#5a3d2a")},
+ beopjusa(c){sky(c,"#f3c9a0","#f6e6cf",400);sun(c,140,120,46,"#fbe2b4");ridge(c,260,70,"#9a8aa6",2,28);ridge(c,330,60,"#5f6f6a",7,22);c.fillStyle="#d9cdb3";c.fillRect(0,480,600,120);c.fillStyle="#4b5a52";c.fillRect(0,440,600,40);
+  const cx=300;let y=478;const ws=[230,200,170,140,110];c.fillStyle="#c7bca5";c.fillRect(cx-140,y,280,10);
+  ws.forEach((w,i)=>{body(c,cx,y,w*.62,40-i*2,"#8b3b2c");c.fillStyle="#e3d6b0";for(let k=-2;k<=2;k++)c.fillRect(cx+k*w*.12-3,y-34+i*2,6,24-i*2);y-=40-i*2;roof(c,cx,y,w,22,"#2b3434");y-=22});
+  c.strokeStyle="#c9a24a";c.lineWidth=5;c.beginPath();c.moveTo(cx,y);c.lineTo(cx,y-70);c.stroke();[0,1,2,3,4].forEach(i=>{c.fillStyle="#c9a24a";c.beginPath();c.ellipse(cx,y-12-i*12,10-i,3,0,0,7);c.fill()})},
+ pine(c){sky(c,"#bfe0ea","#eef6f1",430);ridge(c,320,50,"#97b8a8",5,30);c.fillStyle="#88a65e";c.fillRect(0,440,600,160);c.fillStyle="#c9b48a";c.beginPath();c.moveTo(380,600);c.quadraticCurveTo(420,500,600,470);c.lineTo(600,600);c.fill();
+  c.strokeStyle="#5c3b26";c.lineWidth=26;c.lineCap="round";c.beginPath();c.moveTo(300,520);c.quadraticCurveTo(290,400,300,300);c.stroke();
+  c.lineWidth=12;[[300,330,170,250],[300,330,440,240],[300,310,230,200],[300,310,380,190],[300,300,300,180]].forEach(([a,b,d,e])=>{c.beginPath();c.moveTo(a,b);c.quadraticCurveTo((a+d)/2,b-40,d,e);c.stroke()});
+  c.fillStyle="#2e5638";[[300,210,200,70],[170,250,80,40],[440,245,90,42],[230,195,90,46],[380,190,90,46],[300,160,110,48]].forEach(([x,y,rx,ry])=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.fill()});
+  c.fillStyle="#3d6b48";[[260,190,60,22],[350,175,60,22],[300,140,60,22]].forEach(([x,y,rx,ry])=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.fill()});
+  c.fillStyle="#7b6a55";c.fillRect(200,515,200,10);for(let x=205;x<400;x+=24)c.fillRect(x,495,5,22);
+  c.fillStyle="#f1ead8";c.fillRect(440,460,70,52);c.fillStyle="#2e3b4a";c.font="bold 16px sans-serif";c.textAlign="center";c.fillText("正二品",475,492)},
+ jungangtap(c){sky(c,"#a9cbe8","#e9f1f6",380);ridge(c,300,40,"#9fb3c5",3,36);water(c,330,"#5f8fb0","#86afca");c.fillStyle="#7fae5a";c.beginPath();c.moveTo(0,600);c.lineTo(0,420);c.quadraticCurveTo(300,380,600,430);c.lineTo(600,600);c.fill();
+  c.fillStyle="#b89f74";c.beginPath();c.moveTo(200,600);c.lineTo(270,470);c.lineTo(330,470);c.lineTo(400,600);c.fill();
+  stoneP(c,300,470,7,120,"#bdb8ad","#8d877b");pine(c,90,500,.9,"#2f5a3a","#5a3d2a");pine(c,520,510,.8,"#2f5a3a","#5a3d2a")},
+ cheongpung(c){sky(c,"#f2b48a","#f8e1c7",340);sun(c,460,150,54,"#ffd9a8");ridge(c,250,70,"#b48a8c",9,30);ridge(c,300,50,"#7f7486",6,22);water(c,330,"#6a8aa6","#8ea8bf");
+  c.fillStyle="#5e6b4c";c.beginPath();c.moveTo(0,600);c.lineTo(0,380);c.quadraticCurveTo(150,330,330,390);c.quadraticCurveTo(380,420,380,600);c.fill();
+  // pavilion
+  const cx=180,y=372;c.fillStyle="#8a3a2b";for(let i=-2;i<=2;i++)c.fillRect(cx+i*36-4,y-70,8,70);c.fillStyle="#a24a36";c.fillRect(cx-90,y-80,180,12);roof(c,cx,y-80,220,42,"#2b3434");
+  c.fillStyle="#d4c7a8";c.fillRect(cx-96,y,192,10);pine(c,330,420,.8,"#2e4a34","#5a3d2a");
+  c.fillStyle="#f1e3c8";[[470,420],[520,460]].forEach(([x,yy])=>{c.beginPath();c.moveTo(x-20,yy);c.lineTo(x+20,yy);c.lineTo(x+14,yy+8);c.lineTo(x-14,yy+8);c.fill();c.fillRect(x-1,yy-22,2,22)})},
+ uirimji(c){sky(c,"#c7dfe6","#f1f5ef",360);ridge(c,270,50,"#9cb6ac",11,28);c.fillStyle="#6f8f6c";c.fillRect(0,320,600,30);
+  c.fillStyle="#6c9bb2";c.beginPath();c.ellipse(320,450,330,120,0,0,7);c.fill();c.strokeStyle="#9cc2d2";c.lineWidth=3;for(let i=0;i<6;i++){c.beginPath();c.ellipse(320,450,280-i*40,90-i*14,0,0.2,1.2);c.stroke()}
+  c.fillStyle="#5b7a50";c.beginPath();c.moveTo(0,600);c.lineTo(0,520);c.quadraticCurveTo(150,560,320,580);c.lineTo(600,560);c.lineTo(600,600);c.fill();
+  const cx=470,y=360;c.fillStyle="#7e3a2a";[-30,0,30].forEach(d=>c.fillRect(cx+d-3,y-46,6,46));roof(c,cx,y-46,110,30,"#2b3434");c.fillStyle="#c9bda1";c.fillRect(cx-50,y,100,8);
+  pine(c,80,400,1.1,"#2c4a35","#5a3d2a");pine(c,160,380,.9,"#2c4a35","#5a3d2a");pine(c,250,370,.7,"#3a5a40","#5a3d2a");pine(c,560,570,1,"#2c4a35","#5a3d2a")},
+ dodam(c){sky(c,"#d9c6e4","#f6e8de",340);sun(c,110,110,36,"#fff1d6");ridge(c,260,60,"#a99bb8",13,26);ridge(c,310,30,"#7d8a7b",3,30);water(c,320,"#5d8aa3","#82a9be");
+  const peak=(x,base,w,h,col)=>{c.fillStyle=col;c.beginPath();c.moveTo(x-w/2,base);c.quadraticCurveTo(x-w*.45,base-h*.7,x-w*.12,base-h);c.quadraticCurveTo(x,base-h*1.06,x+w*.15,base-h*.96);c.quadraticCurveTo(x+w*.48,base-h*.6,x+w/2,base);c.fill();c.strokeStyle="rgba(0,0,0,.18)";c.lineWidth=3;for(let i=1;i<4;i++){c.beginPath();c.moveTo(x-w*.4+i*8,base-h*.2*i);c.lineTo(x+w*.4-i*8,base-h*.2*i-6);c.stroke()}};
+  peak(180,440,110,130,"#6e7066");peak(450,450,90,110,"#6a6b60");peak(310,450,170,220,"#5f6156");
+  c.fillStyle="#2d4a33";c.beginPath();c.ellipse(310,240,60,18,0,0,7);c.fill();
+  const cx=310,y=232;c.fillStyle="#8a3a2b";[-14,14].forEach(d=>c.fillRect(cx+d-2,y-24,4,24));roof(c,cx,y-24,54,14,"#2b3434");
+  c.fillStyle="rgba(255,255,255,.25)";[[180,450],[310,460],[450,460]].forEach(([x,yy])=>{c.beginPath();c.ellipse(x,yy,80,8,0,0,7);c.fill()})}
+};
+const IMG={};
+function art(id,size,square){const pl=PLACES.find(p=>p.id===id);if(pl&&pl.photo)return square?pl.photoSq:pl.photo;const k=id+"_"+size;if(IMG[k])return IMG[k];const cv=document.createElement("canvas");cv.width=cv.height=size;const c=cv.getContext("2d");c.scale(size/600,size/600);SCENES[id](c);IMG[k]=cv.toDataURL("image/jpeg",.88);return IMG[k]}
+
+/* ================= TTS ================= */
+let speaking=null;
+function speak(text,btn){
+  if(!("speechSynthesis" in window)){toast(T("noTTS"));return}
+  const synth=window.speechSynthesis;
+  if(speaking&&speaking.btn===btn){synth.cancel();return}
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang=VOICE[S.lang];u.rate=.95;
+  const v=synth.getVoices().find(v=>v.lang&&v.lang.replace("_","-").toLowerCase().startsWith(VOICE[S.lang].slice(0,2)));
+  if(v)u.voice=v;else if(synth.getVoices().length)$("mVoiceNote").textContent=T("noVoice");
+  const reset=()=>{if(btn)btn.textContent=btn.dataset.label;speaking=null};
+  u.onend=reset;u.onerror=reset;
+  if(btn){btn.dataset.label=btn.dataset.label||btn.textContent;btn.textContent=T("stop")}
+  speaking={btn};
+  try{synth.speak(u)}catch(e){reset();toast(T("noTTS"))}
+}
+function stopSpeak(){try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}speaking=null}
+
+/* ================= RENDER: HOME ================= */
+function renderHubs(){
+  $("hubs").innerHTML=["osong","airport"].map(h=>`<button class="hub" aria-pressed="${S.hub===h}" data-hub="${h}"><b>${T(h)}</b><span>${T(h+"Sub")}</span></button>`).join("");
+  $("hubs").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.hub=b.dataset.hub;save();renderAll()});
+}
+function renderHeroPhoto(){
+  const air=S.hub==="airport";
+  $("heroAirport").classList.toggle("hide",!air);$("heroOsong").classList.toggle("hide",air);
+  $("heroAirport").alt=T("airport");$("heroOsong").alt=T("osong");
+  $("heroCap").textContent=T(S.hub);
+}
+const INTS=["history","nature","photo","walk","kids"];
+function renderInterests(){
+  $("interests").innerHTML=INTS.map(i=>`<button class="chip" aria-pressed="${S.interests.includes(i)}" data-i="${i}">${T("int_"+i)}</button>`).join("");
+  $("interests").querySelectorAll("button").forEach(b=>b.onclick=()=>{const i=b.dataset.i;S.interests=S.interests.includes(i)?S.interests.filter(x=>x!==i):[...S.interests,i];save();renderInterests();renderRec()});
+}
+function recommend(){
+  return PLACES.map(p=>{const match=p.tags.filter(t=>S.interests.includes(t));const d=dist(p);return{p,match,d,score:match.length*40-d*.35+(p.featured&&S.interests.includes("history")?30:0)+(S.stamps.includes(p.id)?-15:0)}}).sort((a,b)=>b.score-a.score).slice(0,3);
+}
+function cardHTML(p,extra=""){
+  const got=S.stamps.includes(p.id);
+  return `<button class="card pcard" data-open="${p.id}"><img src="${art(p.id,480)}" alt="${L(p.name)}"><div class="b">${extra}<h3>${L(p.name)}</h3><div class="muted" style="font-size:14px">${L(p.short)}</div><div class="meta"><span class="tag">${L(p.region)}</span><span>${T("km",{hub:hubName(),km:dist(p)})}</span>${got?`<span class="got-badge">● ${T("collected")}</span>`:""}</div></div></button>`;
+}
+function renderRec(){
+  $("recList").innerHTML=recommend().map((r,i)=>cardHTML(r.p,`<span class="rank-n">${i+1}</span><span class="why">${r.match.length?T("why",{t:r.match.map(m=>T("int_"+m)).join(" · ")}):T("whyNear")}</span>`)).join("");
+  bindOpen($("recList"));
+}
+let teaserId=PLACES[Math.floor(Math.random()*PLACES.length)].id;
+function renderTeaser(){
+  const p=P(teaserId);
+  $("teaser").innerHTML=`<img src="${art(p.id,240)}" alt=""><div class="t"><b>${T("teaserT")} · ${L(p.name)}</b><span class="muted" style="font-size:14px">${T("teaserD")}</span><div><button class="btn stampb" id="teaserGo">${T("play")}</button></div></div>`;
+  $("teaserGo").onclick=()=>{pz.id=teaserId;go("puzzle");newPuzzle()};
+}
+function renderPassport(){
+  $("stamps").innerHTML=PLACES.map(p=>`<div class="stamp ${S.stamps.includes(p.id)?"got":""}" title="${L(p.name)}">${L(p.region)}</div>`).join("");
+  $("stampCount").textContent=T("stampsOf",{n:S.stamps.length,t:PLACES.length});
+  let r=0;RANKS.forEach((v,i)=>{if(S.points>=v)r=i});
+  $("rankName").innerHTML=`<b>${T("rank"+r)}</b>`;
+  if(r<RANKS.length-1){$("rankNext").textContent=T("toNext",{n:RANKS[r+1]-S.points});$("rankBar").style.width=((S.points-RANKS[r])/(RANKS[r+1]-RANKS[r])*100)+"%"}
+  else{$("rankNext").textContent=T("maxRank");$("rankBar").style.width="100%"}
+  $("ptsVal").textContent=S.points;
+}
+
+/* ================= PLACES ================= */
+function renderPlaces(){
+  $("placesSub").textContent=T("nearest",{hub:hubName()});
+  $("placeGrid").innerHTML=[...PLACES].sort((a,b)=>dist(a)-dist(b)).map(p=>cardHTML(p)).join("");
+  bindOpen($("placeGrid"));
+}
+function bindOpen(root){root.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openPlace(b.dataset.open))}
+let lastFocus=null;
+function openPlace(id){
+  const p=P(id);lastFocus=document.activeElement;
+  $("mImg").src=art(id,800);$("mImg").alt=L(p.name);
+  $("mMeta").textContent=L(p.region)+" · "+T("km",{hub:hubName(),km:dist(p)});
+  $("mTitle").textContent=L(p.name);$("mDesc").textContent=L(p.desc);$("mVoiceNote").textContent="";
+  const lb=$("mListen");lb.textContent=T("listen");lb.dataset.label=T("listen");lb.onclick=()=>speak(L(p.name)+". "+L(p.desc),lb);
+  $("mPuzzle").textContent=T("toPuzzle");$("mPuzzle").onclick=()=>{closeModal();pz.id=id;go("puzzle");newPuzzle()};
+  $("mAR").textContent=T("toAR");$("mAR").onclick=()=>{closeModal();ar.id=id;go("ar");renderMissions()};
+  $("mClose").textContent=T("close");$("mClose").onclick=closeModal;
+  $("modal").classList.add("on");$("mClose").focus();
+}
+function closeModal(){stopSpeak();$("modal").classList.remove("on");if(lastFocus)lastFocus.focus()}
+$("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("modal").classList.contains("on"))closeModal()});
+
+/* ================= PUZZLE ================= */
+const pz={id:teaserId,n:3,order:[],sel:-1,moves:0,start:0,timer:null,done:false};
+function newPuzzle(){
+  const N=pz.n*pz.n;pz.order=[...Array(N).keys()];
+  do{for(let i=N-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pz.order[i],pz.order[j]]=[pz.order[j],pz.order[i]]}}while(pz.order.every((v,i)=>v===i));
+  pz.sel=-1;pz.moves=0;pz.done=false;pz.start=0;clearInterval(pz.timer);$("pzTime").textContent="0:00";$("win").classList.remove("on");
+  renderPuzzle();
+}
+function renderPuzzle(){
+  const p=P(pz.id),src=art(pz.id,720,true),n=pz.n;
+  $("pzRef").src=art(pz.id,480,true);$("pzRef").alt=L(p.name);$("pzName").textContent=L(p.name);$("pzMoves").textContent=pz.moves;
+  const b=$("board");b.style.gridTemplateColumns=`repeat(${n},1fr)`;
+  b.innerHTML=pz.order.map((v,i)=>{const x=v%n,y=Math.floor(v/n);return `<button class="tile ${v===i?"ok":""} ${pz.sel===i?"sel":""}" data-i="${i}" aria-label="${i+1}" style="background-image:url(${src});background-size:${n*100}% ${n*100}%;background-position:${n>1?x/(n-1)*100:0}% ${n>1?y/(n-1)*100:0}%"></button>`}).join("");
+  b.querySelectorAll(".tile").forEach(t=>t.onclick=()=>tap(+t.dataset.i));
+  $("pzSize").innerHTML=[3,4].map(k=>`<button class="chip" aria-pressed="${pz.n===k}" data-n="${k}">${k}×${k}</button>`).join("");
+  $("pzSize").querySelectorAll("button").forEach(c=>c.onclick=()=>{pz.n=+c.dataset.n;newPuzzle()});
+  $("pzPick").innerHTML=PLACES.map(q=>`<button aria-pressed="${q.id===pz.id}" data-id="${q.id}" title="${L(q.name)}"><img src="${art(q.id,160)}" alt="${L(q.name)}"></button>`).join("");
+  $("pzPick").querySelectorAll("button").forEach(c=>c.onclick=()=>{pz.id=c.dataset.id;newPuzzle()});
+}
+function tap(i){
+  if(pz.done)return;
+  if(!pz.start){pz.start=Date.now();pz.timer=setInterval(()=>{const s=Math.floor((Date.now()-pz.start)/1000);$("pzTime").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")},500)}
+  if(pz.sel<0){pz.sel=i}else if(pz.sel===i){pz.sel=-1}else{[pz.order[pz.sel],pz.order[i]]=[pz.order[i],pz.order[pz.sel]];pz.sel=-1;pz.moves++}
+  renderPuzzle();
+  if(pz.order.every((v,k)=>v===k)){
+    pz.done=true;clearInterval(pz.timer);const p=P(pz.id);
+    const first=!S.solved.includes(pz.id);if(first){S.solved.push(pz.id);addPoints(50)}else addPoints(10);
+    $("winText").textContent=first?T("solvedFirst",{name:L(p.name)}):T("solvedAgain");
+    $("win").classList.add("on");toast(first?"+50P":"+10P");
+    const sb=$("pzStory");sb.textContent=T("listenStory");sb.dataset.label=T("listenStory");sb.onclick=()=>speak(L(p.name)+". "+L(p.desc),sb);
+  }
+}
+$("pzShuffle").onclick=newPuzzle;
+$("pzAgain").onclick=()=>{const ids=PLACES.map(p=>p.id).filter(x=>x!==pz.id);pz.id=ids[Math.floor(Math.random()*ids.length)];newPuzzle()};
+
+/* ================= AR ================= */
+const ar={id:"jikji",stream:null};
+function renderMissions(){
+  $("missions").innerHTML=PLACES.map(p=>`<button aria-pressed="${p.id===ar.id}" data-id="${p.id}"><img src="${art(p.id,120)}" alt=""><span>${L(p.name)}</span>${S.stamps.includes(p.id)?`<em>✓</em>`:`<em>+100</em>`}</button>`).join("");
+  $("missions").querySelectorAll("button").forEach(b=>b.onclick=()=>{ar.id=b.dataset.id;renderMissions();updateLabel()});
+  $("arMissionName").textContent=L(P(ar.id).name);updateLabel();
+}
+function updateLabel(){const l=document.querySelector("#arStage .ar-label");if(l)l.textContent=L(P(ar.id).name)}
+function overlayHTML(){return `<div class="ar-overlay"><div class="br tl"></div><div class="br tr"></div><div class="br bl"></div><div class="br bbr"></div><div class="ar-label">${L(P(ar.id).name)}</div></div>`}
+async function openCamera(){
+  $("arMsg").textContent="";
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error("no");
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    ar.stream=s;const st=$("arStage");st.innerHTML=`<video autoplay playsinline muted></video>`+overlayHTML();
+    const v=st.querySelector("video");v.srcObject=s;await v.play().catch(()=>{});
+    $("arShot").hidden=false;$("arCam").hidden=true;$("arMsg").textContent=T("arHint");
+  }catch(e){$("arMsg").textContent=T("camFail")}
+}
+function stopCamera(){if(ar.stream){ar.stream.getTracks().forEach(t=>t.stop());ar.stream=null}$("arShot").hidden=true;$("arCam").hidden=false}
+function composite(src,w,h){
+  const p=P(ar.id),cv=document.createElement("canvas"),W=1200,H=900;cv.width=W;cv.height=H;const c=cv.getContext("2d");
+  const s=Math.max(W/w,H/h);c.drawImage(src,(W-w*s)/2,(H-h*s)/2,w*s,h*s);
+  // frame brackets
+  c.strokeStyle="#fff";c.lineWidth=8;const m=34,L2=80;[[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(([x,y,dx,dy])=>{c.beginPath();c.moveTo(x,y+dy*L2);c.lineTo(x,y);c.lineTo(x+dx*L2,y);c.stroke()});
+  // info panel
+  c.fillStyle="rgba(28,41,71,.86)";const ph=210;c.beginPath();c.roundRect?c.roundRect(40,H-ph-40,W-80,ph,24):c.rect(40,H-ph-40,W-80,ph);c.fill();
+  c.fillStyle="#fff";c.font="bold 46px 'Noto Sans KR',sans-serif";c.textAlign="left";c.fillText(L(p.name),80,H-ph+30);
+  c.fillStyle="#c9d3e6";c.font="30px 'Noto Sans KR',sans-serif";c.fillText(L(p.region)+" · "+L(p.short),80,H-ph+82);
+  c.fillStyle="#e7c46a";c.font="bold 28px 'Noto Sans KR',sans-serif";c.fillText(T("appName")+"  ·  "+new Date().toISOString().slice(0,10),80,H-ph+134);
+  // stamp
+  c.save();c.translate(W-170,170);c.rotate(-.18);c.strokeStyle="#e0472c";c.lineWidth=10;c.beginPath();c.arc(0,0,110,0,7);c.stroke();c.lineWidth=4;c.beginPath();c.arc(0,0,92,0,7);c.stroke();
+  c.fillStyle="#e0472c";c.textAlign="center";c.font="bold 64px 'Black Han Sans',sans-serif";c.fillText("+100",0,22);c.font="bold 24px 'Noto Sans KR',sans-serif";c.fillText(L(p.region),0,64);c.restore();
+  return cv;
+}
+function showResult(cv){
+  stopCamera();const st=$("arStage");st.innerHTML="";const img=new Image();img.src=cv.toDataURL("image/jpeg",.9);img.alt=L(P(ar.id).name);st.appendChild(img);
+  const p=P(ar.id);
+  if(!S.stamps.includes(p.id)){S.stamps.push(p.id);addPoints(100);$("arMsg").textContent=T("arDone",{name:L(p.name)});toast("+100P")}
+  else $("arMsg").textContent=T("arAlready");
+  renderMissions();
+}
+$("arCam").onclick=openCamera;
+$("arShot").onclick=()=>{const v=document.querySelector("#arStage video");if(!v||!v.videoWidth)return;showResult(composite(v,v.videoWidth,v.videoHeight))};
+$("arFile").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);const im=new Image();im.onload=()=>{showResult(composite(im,im.naturalWidth,im.naturalHeight));URL.revokeObjectURL(url)};im.src=url;e.target.value=""};
+
+/* ================= QUIZ ================= */
+const qz={set:[],i:0,right:0,answered:false,res:[],started:false};
+function quizIntro(){
+  $("quiz").innerHTML=`<p style="margin:0;font-size:18px">${T("quizIntro")}</p><div><button class="btn stampb" id="qStart">${T("start")}</button></div>`;
+  $("qStart").onclick=startQuiz;
+}
+function startQuiz(){const pool=[...QUIZ].sort(()=>Math.random()-.5);qz.set=pool.slice(0,5);qz.i=0;qz.right=0;qz.res=[];qz.started=true;renderQ()}
+function renderQ(){
+  if(!qz.started){quizIntro();return}
+  if(qz.i>=5){
+    $("quiz").innerHTML=`<div class="qdots">${qz.res.map(r=>`<i class="${r?"r":"w"}"></i>`).join("")}</div><p class="qtext">${T("result",{n:qz.right})}</p><p class="muted" style="margin:0">+${qz.right*20}P</p><div class="row"><button class="btn stampb" id="qRe">${T("retry")}</button></div>`;
+    $("qRe").onclick=startQuiz;return}
+  const q=qz.set[qz.i];qz.answered=false;
+  $("quiz").innerHTML=`<div class="qdots">${[0,1,2,3,4].map(k=>`<i class="${k<qz.res.length?(qz.res[k]?"r":"w"):(k===qz.i?"c":"")}"></i>`).join("")}</div>
+  <div class="qhead"><span>${T("qOf",{i:qz.i+1})}</span><span>${L(P(q.p).region)}</span></div>
+  <div class="qtext">${L(q.q)}</div>
+  <div class="opts">${L(q.o).map((o,k)=>`<button class="opt" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${o}</span></button>`).join("")}</div>
+  <div class="explain" id="qExp"></div>
+  <div class="row" id="qNav" hidden><button class="btn" id="qNext">${qz.i===4?T("finish"):T("next")}</button><button class="btn alt" id="qMore">${T("learnMore")}</button></div>`;
+  $("quiz").querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(+b.dataset.k));
+}
+function answer(k){
+  if(qz.answered)return;qz.answered=true;const q=qz.set[qz.i],ok=k===q.a;
+  const opts=$("quiz").querySelectorAll(".opt");opts[q.a].classList.add("right");if(!ok)opts[k].classList.add("wrong");opts.forEach(o=>o.disabled=true);
+  if(ok){qz.right++;addPoints(20)}qz.res.push(ok);
+  const e=$("qExp");e.innerHTML=`<b>${ok?T("correct"):T("wrong",{a:L(q.o)[q.a]})}</b><br><span style="font-size:15px">${L(P(q.p).short)}</span>`;e.classList.add("on");
+  $("qNav").hidden=false;$("qNext").onclick=()=>{qz.i++;renderQ()};$("qMore").onclick=()=>openPlace(q.p);$("qNext").focus();
+}
+
+/* ================= NAV / ROUTING ================= */
+const TABS=[
+ ["home",'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
+ ["places",'<path d="M4 10h16M6 10V6l6-3 6 3v4M5 10v9m4-9v9m6-9v9m4-9v9M3 20h18"/>'],
+ ["puzzle",'<path d="M4 4h6v3a2 2 0 1 0 4 0V4h6v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4z"/>'],
+ ["ar",'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3.5"/>'],
+ ["quiz",'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>']
+];
+function renderTabs(){
+  const cur=view();
+  $("tabs").innerHTML=TABS.map(([k,svg])=>`<a href="#${k}" ${k===cur?'aria-current="page"':""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg>${T("nav_"+k)}</a>`).join("");
+}
+function view(){const h=(location.hash||"").slice(1);return TABS.some(t=>t[0]===h)?h:"home"}
+function go(v){if(location.hash!=="#"+v)location.hash=v;else show()}
+function show(){
+  const v=view();document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
+  $("modal").classList.remove("on");
+  if(v!=="ar")stopCamera();stopSpeak();renderTabs();window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",show);
+
+function applyStatic(){
+  document.documentElement.lang=S.lang;document.title=T("appName");
+  document.querySelectorAll("[data-t]").forEach(el=>el.textContent=T(el.dataset.t));
+  $("lang").value=S.lang;
+}
+function renderAll(){
+  applyStatic();renderHubs();renderInterests();renderRec();renderTeaser();renderPassport();renderPlaces();renderPuzzle();renderMissions();
+  if(!qz.started)quizIntro();else if(!qz.answered||qz.i>=5)renderQ();
+  renderTabs();
+  renderHeroPhoto();
+}
+$("lang").onchange=e=>{S.lang=e.target.value;save();stopSpeak();renderAll()};
+if("speechSynthesis" in window){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(e){}}
+
+newPuzzle();renderAll();show();
+</script>
+</body>
+</html>
